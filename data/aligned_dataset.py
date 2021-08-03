@@ -6,6 +6,12 @@ from data.base_dataset import BaseDataset, get_transform
 from data.image_folder import make_dataset
 from PIL import Image
 
+"""
+A dataset class for paired image dataset.
+It assumes that the directory '/path/to/data/train' contains image pairs in the form of {A,B}.
+During test time, you need to prepare a directory '/path/to/data/test'.
+"""
+
 
 class AlignedDataset(BaseDataset):
     @staticmethod
