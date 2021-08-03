@@ -1,6 +1,7 @@
-from .base_options import BaseOptions
+# Get the Basic Options
+from base_options import BaseOptions
 
-
+# Testing Options for the GAN
 class TestOptions(BaseOptions):
     def initialize(self, parser):
         parser = BaseOptions.initialize(self, parser)

@@ -1,5 +1,7 @@
-from .base_options import BaseOptions
+# Get the Basic Options
+from base_options import BaseOptions
 
+# Training Options for GAN
 class TrainOptions(BaseOptions):
     def initialize(self, parser):
         parser = BaseOptions.initialize(self, parser)

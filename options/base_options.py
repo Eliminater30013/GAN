@@ -6,7 +6,7 @@ import torch
 import models
 import data
 
-
+# Basic Options for GAN
 class BaseOptions:
     def __init__(self):
         self.initialized = False
