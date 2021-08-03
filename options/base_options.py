@@ -1,3 +1,4 @@
+# Imports #
 import argparse
 import os
 from util import util
@@ -6,10 +7,10 @@ import models
 import data
 
 
-class BaseOptions():
+class BaseOptions:
     def __init__(self):
         self.initialized = False
-
+    # Create own arguments that can be used in the command line interface
     def initialize(self, parser):
         parser.add_argument('--dataroot', required=True, help='path to images (should have subfolders trainA, trainB, valA, valB, etc)')
         parser.add_argument('--batchSize', type=int, default=1, help='input batch size')
@@ -37,7 +38,7 @@ class BaseOptions():
         parser.add_argument('--display_id', type=int, default=1, help='window id of the web display')
         parser.add_argument('--display_server', type=str, default="http://localhost", help='visdom server of the web display')
         parser.add_argument('--display_port', type=int, default=8097, help='visdom port of the web display')
-        parser.add_argument('--no_dropout', action='store_true', help='no dropout for the generator')
+        parser.add_argument('--no_dropout', action='store_true', help='no dropout for the generator, enable this to add a drop out layer for the generator')
         parser.add_argument('--max_dataset_size', type=int, default=float("inf"), help='Maximum number of samples allowed per dataset. If the dataset directory contains more than max_dataset_size, only a subset is loaded.')
         parser.add_argument('--resize_or_crop', type=str, default='resize_and_crop', help='scaling and cropping of images at load time [resize_and_crop|crop|scale_width|scale_width_and_crop]')
         parser.add_argument('--no_flip', action='store_true', help='if specified, do not flip the images for data augmentation')
@@ -46,11 +47,12 @@ class BaseOptions():
         parser.add_argument('--verbose', action='store_true', help='if specified, print more debugging information')
         parser.add_argument('--suffix', default='', type=str, help='customized suffix: opt.name = opt.name + suffix: e.g., {model}_{which_model_netG}_size{loadSize}')
         parser.add_argument('--return_feature', action='store_true', help='return features instead of images, default false')
+        # Once all arguments have been added to the parser, we have initialised the most 'basic' options for the GAN
         self.initialized = True
         return parser
-
+    # Gather the Options from the initialize function
     def gather_options(self):
-        # initialize parser with basic options
+        # Create Parser & initialize parser with basic options allow for each arguments to be accesed later
         if not self.initialized:
             parser = argparse.ArgumentParser(
                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -73,7 +75,7 @@ class BaseOptions():
         self.parser = parser
 
         return parser.parse_args()
-
+    # Store, print and write the options to a file
     def print_options(self, opt):
         message = ''
         message += '----------------- Options ---------------\n'
@@ -84,20 +86,21 @@ class BaseOptions():
                 comment = '\t[default: %s]' % str(default)
             message += '{:>25}: {:<30}{}\n'.format(str(k), str(v), comment)
         message += '----------------- End -------------------'
+        # Print the options
         print(message)
 
-        # save to the disk
+        # save the options to the disk
         expr_dir = os.path.join(opt.checkpoints_dir, opt.name)
         util.mkdirs(expr_dir)
         file_name = os.path.join(expr_dir, 'opt.txt')
         with open(file_name, 'wt') as opt_file:
             opt_file.write(message)
             opt_file.write('\n')
-
+    # Parse options + Bring it all together
     def parse(self):
 
         opt = self.gather_options()
-        opt.isTrain = self.isTrain   # train or test
+        opt.isTrain = self.isTrain   # Figure out if train or test
 
         # process opt.suffix
         if opt.suffix:
