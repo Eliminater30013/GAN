@@ -3,8 +3,17 @@ from dominate.tags import *
 import os
 
 
+# HTML class allows us to save images and write texts into a single HTML file #
 class HTML:
-    def __init__(self, web_dir, title, reflesh=0):
+    """
+           Initialize the HTML classes
+                Parameters:
+                    web_dir (str) -- a directory that stores the webpage. HTML file will be created at <web_dir>/index.html; images will be saved at <web_dir/images/
+                    title (str)   -- the webpage name
+                    refresh (int) -- how often the website refresh itself; if 0; no refreshing
+    """
+
+    def __init__(self, web_dir, title, refresh=0):
         self.title = title
         self.web_dir = web_dir
         self.img_dir = os.path.join(self.web_dir, 'images')
@@ -12,24 +21,27 @@ class HTML:
             os.makedirs(self.web_dir)
         if not os.path.exists(self.img_dir):
             os.makedirs(self.img_dir)
-        # print(self.img_dir)
 
         self.doc = dominate.document(title=title)
-        if reflesh > 0:
+        if refresh > 0:
             with self.doc.head:
-                meta(http_equiv="reflesh", content=str(reflesh))
+                meta(http_equiv="refresh", content=str(refresh))
 
+    # Return the directory that stores the Image
     def get_image_dir(self):
         return self.img_dir
 
+    # Insert Header to HTML file
     def add_header(self, str):
         with self.doc:
             h3(str)
 
+    # Add table to HTML file
     def add_table(self, border=1):
         self.t = table(border=border, style="table-layout: fixed;")
         self.doc.add(self.t)
 
+    # Add Images to HTML file
     def add_images(self, ims, txts, links, width=400):
         self.add_table()
         with self.t:
@@ -42,6 +54,7 @@ class HTML:
                             br()
                             p(txt)
 
+    # Save current images to HTML file
     def save(self):
         html_file = '%s/index.html' % self.web_dir
         f = open(html_file, 'wt')
@@ -49,6 +62,7 @@ class HTML:
         f.close()
 
 
+# Test example
 if __name__ == '__main__':
     html = HTML('web/', 'test_html')
     html.add_header('hello world')
