@@ -1,5 +1,5 @@
 # Get the Basic Options
-from base_options import BaseOptions
+from .base_options import BaseOptions
 
 # Testing Options for the GAN
 class TestOptions(BaseOptions):
