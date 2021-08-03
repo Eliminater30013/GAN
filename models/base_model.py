@@ -6,7 +6,7 @@ from . import networks
 
 class BaseModel:
 
-    def __init__(self, opt):
+    def initialize(self, opt):
         self.opt = opt
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
