@@ -6,6 +6,7 @@ from torch.nn.functional import normalize
 from torch.nn.parameter import Parameter
 
 
+# Apply spectral normalization for easier training of the GAN specifically the discriminator
 class SpectralNorm(object):
 
     def __init__(self, name='weight', n_power_iterations=1, dim=0, eps=1e-12):

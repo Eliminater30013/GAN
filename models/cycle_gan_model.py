@@ -4,7 +4,9 @@ from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
 
-
+# Not currently being used for finding the Optical Properties of tissues
+# But if you want to learn more, see:
+# https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix/tree/master/models
 class CycleGANModel(BaseModel):
     def name(self):
         return 'CycleGANModel'

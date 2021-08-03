@@ -21,7 +21,7 @@ class Pix2PixModel(BaseModel):
             parser.add_argument('--lambda_GAN', type=float, default=1, help='weight for GAN loss')
 
         return parser
-
+    # Initialize the pix2pix class
     def initialize(self, opt):
         BaseModel.initialize(self, opt)
         self.isTrain = opt.isTrain
@@ -58,16 +58,16 @@ class Pix2PixModel(BaseModel):
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizers.append(self.optimizer_G)
             self.optimizers.append(self.optimizer_D)
-
+    # Unpack input data from the dataloader and perform necessary pre-processing steps
     def set_input(self, input):
         AtoB = self.opt.which_direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
         self.real_B = input['B' if AtoB else 'A'].to(self.device)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
-
+    # Run forward pass; called by both functions <optimize_parameters> and <test>.
     def forward(self):
         self.fake_B = self.netG(self.real_A)
-
+    # Calculate GAN loss for the discriminator
     def backward_D(self):
         # Fake
         # stop backprop to the generator by detaching fake_B
@@ -84,7 +84,7 @@ class Pix2PixModel(BaseModel):
         self.loss_D = (self.loss_D_fake + self.loss_D_real) * 0.5
 
         self.loss_D.backward()
-
+    # Calculate GAN and L1 loss for the generator
     def backward_G(self):
         # First, G(A) should fake the discriminator
         fake_AB = torch.cat((self.real_A, self.fake_B), 1)
@@ -98,7 +98,7 @@ class Pix2PixModel(BaseModel):
         self.loss_G = self.loss_G_GAN * self.opt.lambda_GAN + self.loss_G_L1 * self.opt.lambda_L1
 
         self.loss_G.backward()
-
+    # Optimize
     def optimize_parameters(self):
         self.forward()
         # update D

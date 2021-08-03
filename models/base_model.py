@@ -4,18 +4,9 @@ from collections import OrderedDict
 from . import networks
 
 
-class BaseModel():
+class BaseModel:
 
-    # modify parser to add command line options,
-    # and also change the default values if needed
-    @staticmethod
-    def modify_commandline_options(parser, is_train):
-        return parser
-    
-    def name(self):
-        return 'BaseModel'
-
-    def initialize(self, opt):
+    def __init__(self, opt):
         self.opt = opt
         self.gpu_ids = opt.gpu_ids
         self.isTrain = opt.isTrain
@@ -27,6 +18,15 @@ class BaseModel():
         self.model_names = []
         self.visual_names = []
         self.image_paths = []
+
+        # modify parser to add command line options,
+        # and also change the default values if needed
+    @staticmethod
+    def modify_commandline_options(parser, is_train):
+        return parser
+
+    def name(self):
+        return 'BaseModel'
 
     def set_input(self, input):
         self.input = input

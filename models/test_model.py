@@ -3,6 +3,7 @@ from . import networks
 from .cycle_gan_model import CycleGANModel
 
 
+# This can be used to test the CycleGAN model
 class TestModel(BaseModel):
     def name(self):
         return 'TestModel'

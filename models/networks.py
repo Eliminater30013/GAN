@@ -16,6 +16,7 @@ from torch.autograd import Variable
 from models.spectral_norm import spectral_norm
 
 
+# The next 4 functions are seen in Basic blocks
 def conv_block(in_dim,out_dim,act_fn,spec_norm=True):
     if spec_norm:
         model = nn.Sequential(

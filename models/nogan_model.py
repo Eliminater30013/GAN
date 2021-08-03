@@ -4,6 +4,7 @@ from .base_model import BaseModel
 from . import networks
 
 
+# Not currently being used for finding the Optical Properties of tissues
 class noGANModel(BaseModel):
     def name(self):
         return 'NoGANModel'

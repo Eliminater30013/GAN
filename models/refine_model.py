@@ -4,7 +4,7 @@ from .base_model import BaseModel
 from . import networks
 import itertools
 
-
+# Looks like a refined pix2pix model?
 class RefineModel(BaseModel):
     def name(self):
         return 'RefineModel'
