@@ -135,61 +135,98 @@ def get_abs_and_sct_NMAE(gan_result_path, ground_truth_path, show=True):
         print(f"Reduced Scattering NMAE: {sct_NMAE}")
     return {'Avg_NMAE': overall_NMAE, 'Abs_NMAE': abs_NMAE, 'Sct_NMAE': sct_NMAE}
 
+# TODO: Figure our how to get epoch number and the losses and plot in a matplotlib
+def plot_loss_log(path_file):
+    loss_log = {}
+    with open(path_file) as f:
+        next(f)
+        for line in f:
+            text = line.split(')')
+            X = text[0] + ')'
+            print(X.split())
+            # loss_log = dict(text[0])
+            # print(text[1])
+            exit()
+            loss_log[int(key)] = val
+    return
+
+
+
+
+
+plot_loss_log('checkpoints/more_epoch/loss_log.txt')
+
+
+
+
+
+
+
+
+
+
 
 # AC and DC works (only sct and if trained with AC DC seperately), this time with light projection
 # Perhaps train with other AC patterns and see if AC GANPOP can do!
 # AC has spatial freq of f004 (0.035mm-1), phase 120. But should work with all AC patterns if trained
 # DC is f0 (0mm-1) phase 0. Should work with all phases.
 # Conex problem with vignetting, aim is to fix this in the future
-# test('./checkpoints/test1/web/images/epoch188_fake_B.png',
-#      './checkpoints/test1/web/images/epoch188_real_B.png')
-test('./results/test2/test_latest/images/015_fake_B.png',
-     './results/test2/test_latest/images/015_real_B.png')
-
-
-exit()
-experiment_name_1 = 'test1'
-experiment_name_2 = 'test2'
-multiplier = 4
-TEST = False
-NMAE_values = {experiment_name_1: {},
-               experiment_name_2: {},
-               'train1': {},
-               'train2': {}
+# test('./results/more_epoch/test_latest/images/010_fake_B.png',
+#     './results/more_epoch/test_latest/images/010_real_B.png')
+num = 20
+get_abs_and_sct_NMAE(f'./results/more_epoch/test_latest/images/{num:03}_fake_B.png',
+                     f'./results/more_epoch/test_latest/images/{num:03}_real_B.png', True)
+# test('./results/plain_AC_4/test_latest/images/010_fake_B.png',
+#     './results/plain_AC_4_copy/test_latest/images/010_real_B.png')
+get_abs_and_sct_NMAE(f'./results/plain_AC_4/test_latest/images/{num:03}_fake_B.png',
+                     f'./results/plain_AC_4/test_latest/images/{num:03}_real_B.png', True)
+# 300 epoch looks to be the best
+#exit()
+experiment_name_1 = 'plain_AC_4'
+experiment_name_2 = 'more_epoch'
+multiplier = 8
+TEST = True
+NMAE_values = {experiment_name_1: {'test': {}, 'train': {}},
+               experiment_name_2: {'test': {}, 'train': {}},
                }
-# for i in range(1, 51):
-#     NMAE_values['test1'].update(
-#         {4 * i: get_abs_and_sct_NMAE(f'./checkpoints/test1/web/images/epoch{multiplier * i:03}_fake_B.png',
-#                                      f'./checkpoints/test1/web/images/epoch{multiplier * i:03}_real_B.png', False)})
-#     NMAE_values['test2'].update(
-#         {4 * i: get_abs_and_sct_NMAE(f'./checkpoints/test2/web/images/epoch{multiplier * i:03}_fake_B.png',
-#                                      f'./checkpoints/test2/web/images/epoch{multiplier * i:03}_real_B.png', False)})
+# for i in range(1, 26):
+#     #     NMAE_values['test1'].update(
+#     #         {4 * i: get_abs_and_sct_NMAE(f'./checkpoints/test1/web/images/epoch{multiplier * i:03}_fake_B.png',
+#     #                                      f'./checkpoints/test1/web/images/epoch{multiplier * i:03}_real_B.png', False)})
+#     NMAE_values[experiment_name_1]['train'].update(
+#         {multiplier * i: get_abs_and_sct_NMAE(f'./checkpoints/test2/web/images/epoch{multiplier * i:03}_fake_B.png',
+#                                               f'./checkpoints/test2/web/images/epoch{multiplier * i:03}_real_B.png',
+#                                               False)})
+# print(len(NMAE_values[experiment_name_1]))
 
-list_results = []
-# Use of WildCards to dearch in strings
-for filename in glob.iglob('./results/AC_test/test_latest/images' + '*/*_B.png', recursive=True):
-    list_results.append(filename)
-for i in range(0, len(filename) - 1):
-    NMAE_values['train1'].update(
-        {i: get_abs_and_sct_NMAE(list_results[i],
-                                 list_results[i+1], False)})
-    # NMAE_values['train2'].update(
-    #     {j: get_abs_and_sct_NMAE(f'./results/test2/test_latest/images/{i:03}_fake_B.png',
-    #                              f'./results/test2/test_latest/images/{i:03}_real_B.png', False)})
+list_results_1 = []
+list_results_2 = []
+# Use of WildCards to search in strings
+for counter1, filename in enumerate(glob.iglob(f'./results/{experiment_name_1}/test_latest/images' + '*/*_B.png', recursive=True)):
+    list_results_1.append(filename)
+for counter2, filename in enumerate(glob.iglob(f'./results/{experiment_name_2}/test_latest/images' + '*/*_B.png', recursive=True)):
+    list_results_2.append(filename)
+counter1 = int((counter1+1)/2)
+counter2 = int((counter2+1)/2)
+for i in range(counter1):
+    NMAE_values[experiment_name_1]['test'].update(
+        {i: get_abs_and_sct_NMAE(list_results_1[i],
+                                 list_results_1[i + 1], False)})
+for i in range(counter2):
+    NMAE_values[experiment_name_2]['test'].update(
+        {i: get_abs_and_sct_NMAE(list_results_2[i],
+                                 list_results_2[i + 1], False)})
 # Data whilst training
-print(NMAE_values['train1'])
-
-if TEST:
-    y1 = [NMAE_values['test1'][4 * i]['Sct_NMAE'] for i in range(1, 51)]
-    x = NMAE_values['test1'].keys()
-    y2 = [NMAE_values['test2'][4 * i]['Sct_NMAE'] for i in range(1, 51)]
-# Data whilst testing
-else:
-    y1 = [NMAE_values['train1'][i]['Sct_NMAE'] for i in range(0, 56)]
-    x = NMAE_values['train1'].keys()
-    y2 = [NMAE_values['train1'][i]['Sct_NMAE'] for i in range(0,  56)]
-plt.plot(x, y1, label=experiment_name_1)
-plt.plot(x, y2, label=experiment_name_2)
+y1 = [NMAE_values[experiment_name_1]['test'][i]['Sct_NMAE'] for i in range(0, counter1)]
+x1 = NMAE_values[experiment_name_1]['test'].keys()
+y2 = [NMAE_values[experiment_name_2]['test'][i]['Sct_NMAE'] for i in range(0, counter2)]
+x2 = NMAE_values[experiment_name_2]['test'].keys()
+# y2 = [NMAE_values[experiment_name_2]['train'][multiplier * i]['Sct_NMAE'] for i in range(1, 26)]
+# x2 = NMAE_values['train2'].keys()
+#plt.subplot(211)
+plt.plot(x1, y1, label=experiment_name_1)
+#plt.subplot(212)
+plt.plot(x2, y2, label=experiment_name_2)
 plt.legend(loc="upper right")
 plt.yscale('log')
 plt.show()

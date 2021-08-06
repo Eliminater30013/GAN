@@ -3,6 +3,7 @@ import numpy as np
 from pathlib import Path
 from PIL import Image
 import glob  # Unix System
+from sklearn.model_selection import train_test_split
 
 
 def split_image(path, show_image=False):
@@ -69,6 +70,7 @@ def altElement(a, from_first=False):
     else:
         return a[1::2]
 
+
 # Get rid of vignetting
 def normalize_by_reference(image_path, reference_path):
     height, width = reference_path.shape[:2]
@@ -103,27 +105,22 @@ def normalize_by_reference(image_path, reference_path):
     # cv2.waitKey(0)
 
 
-# Train with even samples ie from_first = False, 2nd, 4th element
-# Test with odd ie from_first = True 1st 3rd element
-input_AC = load_images_in_folder("datasets/Blender/test3/in")
-output_AC = load_images_in_folder("datasets/Blender/test3/out")
-# input_AC = input_AC[:50]
-# output_AC = output_AC[:70]
-#input_AC = altElement(input_AC)
-#output_AC = altElement(output_AC)
-# Convert RGB to GRAY
-# output_folder = "./z"
-# for i in range(70):
-#     opencvImage = cv2.cvtColor(np.array(input_AC[i]), cv2.COLOR_RGB2GRAY)
-#     combined = combine_images(opencvImage, opencvImage)
-#     Path(output_folder).mkdir(parents=True, exist_ok=True)  # save way of checking if directory exists, if not create it
-#     cv2.imwrite(f'{output_folder}/{i:03}.png', combined)
-# exit()
+def split_dataset(experiment_name, test_size=0.3, seed=None):
+    input_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/in")
+    output_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/out")
 
-output_path = "datasets/Blender/test3/test"
-num = 1
-for left, right in zip(input_AC, output_AC):
-    stitch_images(left, right, output_path, num)
-    num = num + 1
+    X_train, X_test, y_train, y_test = train_test_split(input_AC, output_AC, test_size=test_size, random_state=seed)
+    test_path = f"datasets/Blender/{experiment_name}/test"
+    train_path = f"datasets/Blender/{experiment_name}/train"
 
-# Hello
+    # Training samples
+    for counter, (left, right) in enumerate(zip(X_train, y_train)):
+        stitch_images(left, right, train_path, counter + 1)
+    # Testing samples
+    for counter, (left, right) in enumerate(zip(X_test, y_test)):
+        stitch_images(left, right, test_path, counter + 1)
+
+
+name = "test6"
+test_size = 0.3
+split_dataset(experiment_name=name, test_size=test_size)
