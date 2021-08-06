@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import glob
 from sklearn.metrics import mean_squared_error
+import regex as re
 
 
 ## ADD error checking in future
@@ -135,37 +136,34 @@ def get_abs_and_sct_NMAE(gan_result_path, ground_truth_path, show=True):
         print(f"Reduced Scattering NMAE: {sct_NMAE}")
     return {'Avg_NMAE': overall_NMAE, 'Abs_NMAE': abs_NMAE, 'Sct_NMAE': sct_NMAE}
 
-# TODO: Figure our how to get epoch number and the losses and plot in a matplotlib
+
 def plot_loss_log(path_file):
     loss_log = {}
     with open(path_file) as f:
         next(f)
-        for line in f:
-            text = line.split(')')
-            X = text[0] + ')'
-            print(X.split())
-            # loss_log = dict(text[0])
-            # print(text[1])
-            exit()
-            loss_log[int(key)] = val
-    return
+        for count, line in enumerate(f):
+            # get rid of unwanted characters like brackets, commas amd colon
+            characters_to_remove = ":(),"
+            pattern = "[" + characters_to_remove + "]"
+            new_string = re.sub(pattern, "", line).split()
+            # Store in dict
+            loss_log[count] = dict((zip(new_string[::2], new_string[1::2])))
+    return loss_log
 
 
-
-
-
-plot_loss_log('checkpoints/more_epoch/loss_log.txt')
-
-
-
-
-
-
-
-
-
-
-
+a = plot_loss_log('checkpoints/more_epoch/loss_log.txt')
+# TODO: Figure out hoe to smoothen out the loss graphs!
+epochs = [int(a[i]['epoch']) for i in range(len(a))]
+G_L1 = [float(a[i]['G_L1']) for i in range(len(a))]
+G_GAN = [float(a[i]['G_GAN']) for i in range(len(a))]
+D_real = [float(a[i]['D_real']) for i in range(len(a))]
+D_fake = [float(a[i]['D_fake']) for i in range(len(a))]
+plt.plot(epochs, G_L1, label='G_L1')
+# plt.plot(epochs, G_GAN, label=G_GAN)
+# plt.plot(epochs, D_real, label=D_real)
+# plt.plot(epochs, D_fake, label=D_fake)
+plt.show()
+exit()
 # AC and DC works (only sct and if trained with AC DC seperately), this time with light projection
 # Perhaps train with other AC patterns and see if AC GANPOP can do!
 # AC has spatial freq of f004 (0.035mm-1), phase 120. But should work with all AC patterns if trained
@@ -181,7 +179,7 @@ get_abs_and_sct_NMAE(f'./results/more_epoch/test_latest/images/{num:03}_fake_B.p
 get_abs_and_sct_NMAE(f'./results/plain_AC_4/test_latest/images/{num:03}_fake_B.png',
                      f'./results/plain_AC_4/test_latest/images/{num:03}_real_B.png', True)
 # 300 epoch looks to be the best
-#exit()
+# exit()
 experiment_name_1 = 'plain_AC_4'
 experiment_name_2 = 'more_epoch'
 multiplier = 8
@@ -202,12 +200,14 @@ NMAE_values = {experiment_name_1: {'test': {}, 'train': {}},
 list_results_1 = []
 list_results_2 = []
 # Use of WildCards to search in strings
-for counter1, filename in enumerate(glob.iglob(f'./results/{experiment_name_1}/test_latest/images' + '*/*_B.png', recursive=True)):
+for counter1, filename in enumerate(
+        glob.iglob(f'./results/{experiment_name_1}/test_latest/images' + '*/*_B.png', recursive=True)):
     list_results_1.append(filename)
-for counter2, filename in enumerate(glob.iglob(f'./results/{experiment_name_2}/test_latest/images' + '*/*_B.png', recursive=True)):
+for counter2, filename in enumerate(
+        glob.iglob(f'./results/{experiment_name_2}/test_latest/images' + '*/*_B.png', recursive=True)):
     list_results_2.append(filename)
-counter1 = int((counter1+1)/2)
-counter2 = int((counter2+1)/2)
+counter1 = int((counter1 + 1) / 2)
+counter2 = int((counter2 + 1) / 2)
 for i in range(counter1):
     NMAE_values[experiment_name_1]['test'].update(
         {i: get_abs_and_sct_NMAE(list_results_1[i],
@@ -223,9 +223,9 @@ y2 = [NMAE_values[experiment_name_2]['test'][i]['Sct_NMAE'] for i in range(0, co
 x2 = NMAE_values[experiment_name_2]['test'].keys()
 # y2 = [NMAE_values[experiment_name_2]['train'][multiplier * i]['Sct_NMAE'] for i in range(1, 26)]
 # x2 = NMAE_values['train2'].keys()
-#plt.subplot(211)
+# plt.subplot(211)
 plt.plot(x1, y1, label=experiment_name_1)
-#plt.subplot(212)
+# plt.subplot(212)
 plt.plot(x2, y2, label=experiment_name_2)
 plt.legend(loc="upper right")
 plt.yscale('log')
