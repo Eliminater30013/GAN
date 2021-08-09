@@ -158,11 +158,18 @@ G_L1 = [float(a[i]['G_L1']) for i in range(len(a))]
 G_GAN = [float(a[i]['G_GAN']) for i in range(len(a))]
 D_real = [float(a[i]['D_real']) for i in range(len(a))]
 D_fake = [float(a[i]['D_fake']) for i in range(len(a))]
+<<<<<<< HEAD
 plt.plot(epochs, G_L1,'o',  label='G_L1')
 #plt.ylim(0,0.02) # Use this to see the loss in detail
 #plt.plot(epochs, G_GAN, label=G_GAN)
 #plt.plot(epochs, D_real, label=D_real)
 #plt.plot(epochs, D_fake, label=D_fake)
+=======
+plt.plot(epochs, G_L1, 'o', label='G_L1')
+# plt.plot(epochs, G_GAN, label=G_GAN)
+# plt.plot(epochs, D_real, label=D_real)
+# plt.plot(epochs, D_fake, label=D_fake)
+>>>>>>> c9d570fa5f19242a4688e4a1e42fca1fafa50d99
 plt.show()
 exit()
 # AC and DC works (only sct and if trained with AC DC seperately), this time with light projection
