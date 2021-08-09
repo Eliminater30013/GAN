@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 import glob
-from sklearn.metrics import mean_squared_error
 import regex as re
 
 
