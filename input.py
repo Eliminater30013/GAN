@@ -105,9 +105,13 @@ def normalize_by_reference(image_path, reference_path):
     # cv2.waitKey(0)
 
 
-def split_dataset(experiment_name, test_size=0.3, seed=None):
+def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False):
     input_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/in")
-    output_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/out")
+    if no_gnd:
+        # Make a output folder which contains just white files
+        output_AC = [image for image in Image.open('white.png')]
+    else:
+        output_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/out")
 
     X_train, X_test, y_train, y_test = train_test_split(input_AC, output_AC, test_size=test_size, random_state=seed)
     test_path = f"datasets/Blender/{experiment_name}/test"
@@ -120,4 +124,15 @@ def split_dataset(experiment_name, test_size=0.3, seed=None):
     for counter, (left, right) in enumerate(zip(X_test, y_test)):
         stitch_images(left, right, test_path, counter + 1)
 
-# HELLO!
+
+if __name__== "__main__":
+    # Set up a Parser for Data Preparation
+    parser = argparse.ArgumentParser(description='Run data preprocessing')
+    parser.add_argument('--name', type=str, default='experiment', help='Name of the Experiment')
+    parser.add_argument('--test_size', type=float, default=0.3, help='Size of test dataset')
+    parser.add_argument('--seed', type=int, default=None, help='Random seed for shuffling train/test datasets. If '
+                                                               'left default a new dataset will always be generated')
+    parser.add_argument('--no_gnd', action='store_true', help='Enable this if you do not have a ground truth.')
+    options = parser.parse_args()
+    split_dataset(experiment_name=options.name, test_size=options.test_size,seed=options.seed,no_gnd=options.no_gnd)
+    print(options.no_gnd)
