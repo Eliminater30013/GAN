@@ -111,6 +111,7 @@ def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False):
         # Make a output folder which contains just white files
         output_AC = [image for image in Image.open('white.png')]
     else:
+        # Otherwise use ground truths
         output_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/out")
 
     X_train, X_test, y_train, y_test = train_test_split(input_AC, output_AC, test_size=test_size, random_state=seed)
