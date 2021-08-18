@@ -5,6 +5,8 @@ from PIL import Image
 import glob  # Unix System
 from sklearn.model_selection import train_test_split
 import argparse
+import os
+import shutil
 
 def split_image(path, show_image=False):
     image = cv2.imread(path)
@@ -106,18 +108,25 @@ def normalize_by_reference(image_path, reference_path):
 
 
 def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False):
+    # Requires in and out files
     input_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/in")
-    if no_gnd:
-        # Make a output folder which contains just white files
-        output_AC = [image for image in Image.open('white.png')]
-    else:
-        # Otherwise use ground truths
-        output_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/out")
-
-    X_train, X_test, y_train, y_test = train_test_split(input_AC, output_AC, test_size=test_size, random_state=seed)
+    # If you don't have gnd_truths then make a folder for just testing containing white output files
     test_path = f"datasets/Blender/{experiment_name}/test"
     train_path = f"datasets/Blender/{experiment_name}/train"
-
+    if os.path.exists(test_path):
+        shutil.rmtree(test_path)
+    if os.path.exists(train_path):
+        shutil.rmtree(train_path)
+    if no_gnd:
+        # Make a output folder which contains just white files
+        output_AC = [Image.open('white.png') for i in range(len(input_AC))]
+        for counter, (left, right) in enumerate(zip(input_AC, output_AC)):
+            stitch_images(left, right, test_path, counter + 1)
+        return
+    # Otherwise use ground truths
+    output_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/out")
+    # Split test/train datasets
+    X_train, X_test, y_train, y_test = train_test_split(input_AC, output_AC, test_size=test_size, random_state=seed)
     # Training samples
     for counter, (left, right) in enumerate(zip(X_train, y_train)):
         stitch_images(left, right, train_path, counter + 1)
@@ -126,14 +135,14 @@ def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False):
         stitch_images(left, right, test_path, counter + 1)
 
 
-if __name__== "__main__":
+if __name__ == "__main__":
     # Set up a Parser for Data Preparation
     parser = argparse.ArgumentParser(description='Run data preprocessing')
     parser.add_argument('--name', type=str, default='experiment', help='Name of the Experiment')
     parser.add_argument('--test_size', type=float, default=0.3, help='Size of test dataset')
     parser.add_argument('--seed', type=int, default=None, help='Random seed for shuffling train/test datasets. If '
                                                                'left default a new dataset will always be generated')
-    parser.add_argument('--no_gnd', action='store_true', help='Enable this if you do not have a ground truth.')
+    parser.add_argument('--no_gnd', action='store_true', help='Enable this if you do not have a ground truth. Creates '
+                                                              'test folder only')
     options = parser.parse_args()
-    split_dataset(experiment_name=options.name, test_size=options.test_size,seed=options.seed,no_gnd=options.no_gnd)
-    print(options.no_gnd)
+    split_dataset(experiment_name=options.name, test_size=options.test_size, seed=options.seed, no_gnd=options.no_gnd)
