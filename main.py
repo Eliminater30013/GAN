@@ -31,17 +31,14 @@ Structure of the GANPOP:
     5. After testing, run Optical_Properties.py to see the optical properties of the image. Extra helper functions can
        also be found in this file as well
 In Essence:
-
+        ideal epoch = 300 AC > DC
         Blender->dataset->input.py->GANPOP[Train->Test]->Optical_Properties.py
 
 """
 if __name__ == "main":
     print('hello')
 
-# input.py
-# name = "test6"
-# test_size = 0.3
-# split_dataset(experiment_name=name, test_size=test_size)
+
 # Optical_Properties
 # a = plot_loss_log('checkpoints/more_epoch/loss_log.txt')
 # # TODO: Figure out hoe to smoothen out the loss graphs!

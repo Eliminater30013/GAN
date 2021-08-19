@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import glob
 import regex as re
+import argparse
 
 
 ## ADD error checking in future
@@ -77,15 +78,11 @@ def test(gan_result_path, ground_truth_path):
     plt.clim(0, 0.25)
     ### Difference ###
     combined_diff = diff_images(fake, real)
-    # print(f"NMAE: {NMAE(fake, real)}")
     abs_diff = diff_images(red_f, red_r)
-    # print(f"Absolute NMAE: {NMAE(red_f, red_r)}")
     sct_diff = diff_images(green_f, green_r)
-    # print(f"Reduced Scattering NMAE: {NMAE(green_f, green_r)}")
-    # print(green_f[5][5], green_r[5][5], sct_diff[5][5])
     #
     plt.subplot(337)
-    plt.imshow(combined_diff)
+    plt.imshow(combined_diff.astype('uint8'))
     plt.title('Combined Diff'), plt.xticks([]), plt.yticks([])
     #
     plt.subplot(338)
@@ -98,11 +95,15 @@ def test(gan_result_path, ground_truth_path):
     z = plt.imshow(abs_diff)
     plt.colorbar(z)
     plt.title('Abs Diff'), plt.xticks([]), plt.yticks([])
+    plt.clim(0, 100)
+    #
     plt.show()
 
 
 # IMG1 comparison image, IMG2 ground truth
 def diff_images(fake, real, show_image=False):
+    # We will divide by 0 at times so ignore the warning
+    np.seterr(divide='ignore', invalid='ignore')
     diff = abs(fake - real) * 100 / real  # percentage
     if show_image:
         z = plt.imshow(diff)
@@ -115,6 +116,8 @@ def diff_images(fake, real, show_image=False):
 # Calculate the normalized mean absolute error of the GAN 'fake' and ground truth
 # Predicted + groundtruth are np.array
 def NMAE(predicted, ground_truth):
+    # We will divide by 0 at times so ignore the warning
+    np.seterr(divide='ignore', invalid='ignore')
     error = np.sum(abs(predicted - ground_truth)) / np.sum(ground_truth)
     return error
 
@@ -150,3 +153,111 @@ def plot_loss_log(path_file):
     return loss_log
 
 
+def plot_loss_epoch(options):
+    # TODO: figure out how to make argparser for OP, include lossvsepoch nmae and op
+    a = plot_loss_log(f'checkpoints/{options.name}/loss_log.txt')
+    epochs = [int(a[i]['epoch']) for i in range(len(a))]
+    if options.loss_epoch == 'G_L1':
+        loss = [float(a[i]['G_L1']) for i in range(len(a))]
+    elif options.loss_epoch == 'G_GAN':
+        loss = [float(a[i]['G_GAN']) for i in range(len(a))]
+    elif options.loss_epoch == 'D_real':
+        loss = [float(a[i]['D_real']) for i in range(len(a))]
+    elif options.loss_epoch == 'D_fake':
+        loss = [float(a[i]['D_fake']) for i in range(len(a))]
+    else:
+        print('WRONG INPUT! RAISE WARNING')
+        exit()
+    plt.plot(epochs, loss, 'o', label=('train: ' + options.loss_epoch))
+    plt.legend(loc="upper right")
+    # plt.ylim(0,0.02) # Use this to see the loss in detail
+    plt.show()
+
+
+def plot_loss_NMAE(options):
+    experiment_name = options.name
+    NMAE_values = {experiment_name: {'test': {}, 'train': {}}}
+    list_train = []
+    for counter1, filename in enumerate(
+            glob.iglob(f'./checkpoints/{experiment_name}/web/images' + '*/*_B.png', recursive=True)):
+        list_train.append(filename)
+    if not list_train:
+        print('Invalid Name')
+        exit()
+    counter1 = int((counter1 + 1) / 2)
+    num = []
+    for count, s in enumerate(list_train):
+        if count % 2 == 0:
+            continue
+        result = re.search('epoch(.*)_', s)
+        num.append(int(result.group(1)[0:3]))
+    for i in range(counter1):
+        NMAE_values[experiment_name]['train'].update(
+            {num[i]: get_abs_and_sct_NMAE(list_train[i],
+                                          list_train[i + 1], False)})
+    list_test = []
+    # Use of WildCards to search in strings
+    for counter2, filename in enumerate(
+            glob.iglob(f'./results/{experiment_name}/test_latest/images' + '*/*_B.png', recursive=True)):
+        list_test.append(filename)
+    counter2 = int((counter2 + 1) / 2)
+    for i in range(counter2):
+        NMAE_values[experiment_name]['test'].update(
+            {i: get_abs_and_sct_NMAE(list_test[i],
+                                     list_test[i + 1], False)})
+    if options.NMAE_epoch[0] == 'train':
+        task = 'train'
+        counter = counter1
+    elif options.NMAE_epoch[0] == 'test':
+        task = 'test'
+        counter = counter2
+        num.clear()
+        num = [i for i in range(counter)]
+    else:
+        print('RAISE warning test/train')
+        exit()
+    if options.NMAE_epoch[1] == 'sct':
+        NMAE_type = 'Sct_NMAE'
+    elif options.NMAE_epoch[1] == 'abs':
+        NMAE_type = 'Abs_NMAE'
+    elif options.NMAE_epoch[1] == 'avg':
+        NMAE_type = 'Avg_NMAE'
+    else:
+        print('RAISE warning avg/sct/abs only')
+        exit()
+    y = [NMAE_values[experiment_name][task][i][NMAE_type] for i in num]
+    x = NMAE_values[experiment_name][task].keys()
+
+    plt.plot(x, y, label=(task + ': ' + NMAE_type))
+    plt.legend(loc="upper right")
+    plt.show()
+
+
+def plot_op(options):
+    # IF OVER 1000 FILES CHANGE PADDING TO 04 INSTEAD OF 03
+    # Use this in conjunction with index.html in results of the experiment to see the oP
+    if options.op > 999:
+        print('WARNING options.op must be between 0-999 if over 1000 required change padding to 4')
+    test(f'./results/{options.name}/test_latest/images/{options.op:03}_fake_B.png',
+         f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png')
+    get_abs_and_sct_NMAE(f'./results/plain_AC_4/test_latest/images/{options.op:03}_fake_B.png',
+                         f'./results/plain_AC_4/test_latest/images/{options.op:03}_real_B.png', True)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Find the optical properties of image OR '
+                                                 'Plot NMAE vs epoch [train/test] OR'
+                                                 'Plot loss vs epoch [train]')
+    parser.add_argument('--name', type=str, help='Name of the Experiment', required=True)
+    parser.add_argument('--loss_epoch', type=str, help='types of losses [G_L1, G_GAN, D_real, D_fake]')
+    parser.add_argument('--NMAE_epoch', type=str, nargs='+',
+                        help='Normalized mean absolute error for'
+                             '[train/test] for [sct,abs,both]')
+    parser.add_argument('--op', type=int, help='The sample number, see index.html in /results for more detail')
+    options = parser.parse_args()
+    if options.loss_epoch:
+        plot_loss_epoch(options)
+    if options.NMAE_epoch:
+        plot_loss_NMAE(options)
+    if options.op:
+        plot_op(options)
