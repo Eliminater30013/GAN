@@ -240,8 +240,8 @@ def plot_op(options):
         print('WARNING options.op must be between 0-999 if over 1000 required change padding to 4')
     test(f'./results/{options.name}/test_latest/images/{options.op:03}_fake_B.png',
          f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png')
-    get_abs_and_sct_NMAE(f'./results/plain_AC_4/test_latest/images/{options.op:03}_fake_B.png',
-                         f'./results/plain_AC_4/test_latest/images/{options.op:03}_real_B.png', True)
+    get_abs_and_sct_NMAE(f'./results/{options.name}/test_latest/images/{options.op:03}_fake_B.png',
+                         f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png', True)
 
 
 if __name__ == '__main__':

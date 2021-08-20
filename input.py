@@ -118,27 +118,29 @@ def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False):
     if os.path.exists(train_path):
         shutil.rmtree(train_path)
     if no_gnd:
-        # Make a output folder which contains just white files
-        output_AC = [Image.open('white.png') for i in range(len(input_AC))]
-        for counter, (left, right) in enumerate(zip(input_AC, output_AC)):
-            stitch_images(left, right, test_path, counter + 1)
+        for counter in range(len(input_AC)):
+            # Ensure you have the white png file in main directory
+            stitch_images(input_AC[counter], Image.open('white.png'), test_path, counter + 1)
+        print(f'Testing dataset of size {counter+1} was created')
         return
     # Otherwise use ground truths
     output_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/out")
     # Split test/train datasets
     X_train, X_test, y_train, y_test = train_test_split(input_AC, output_AC, test_size=test_size, random_state=seed)
     # Training samples
-    for counter, (left, right) in enumerate(zip(X_train, y_train)):
-        stitch_images(left, right, train_path, counter + 1)
+    for counter1, (left, right) in enumerate(zip(X_train, y_train)):
+        stitch_images(left, right, train_path, counter1 + 1)
     # Testing samples
-    for counter, (left, right) in enumerate(zip(X_test, y_test)):
-        stitch_images(left, right, test_path, counter + 1)
+    for counter2, (left, right) in enumerate(zip(X_test, y_test)):
+        stitch_images(left, right, test_path, counter2 + 1)
+
+    print(f'Training dataset of size {counter1 + 1} and Testing dataset of size {counter2 + 1} were created')
 
 
 if __name__ == "__main__":
     # Set up a Parser for Data Preparation
     parser = argparse.ArgumentParser(description='Run data preprocessing')
-    parser.add_argument('--name', type=str, default='experiment', help='Name of the Experiment')
+    parser.add_argument('--name', type=str, required=True, help='Name of the Experiment')
     parser.add_argument('--test_size', type=float, default=0.3, help='Size of test dataset')
     parser.add_argument('--seed', type=int, default=None, help='Random seed for shuffling train/test datasets. If '
                                                                'left default a new dataset will always be generated')
