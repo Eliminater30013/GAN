@@ -24,7 +24,7 @@ def show_gtruth(abs_path, sct_path):
     plt.show()
 
 
-def test(gan_result_path, ground_truth_path):
+def test(gan_result_path, ground_truth_path, options):
     ## NEED TO SCALE IMAGES NOW AS BLENDER FILES CAN NOW BE LOADED IN TO PYCHARM
 
     # Pick fake and real images to find absorption + reduced scattering
@@ -36,10 +36,16 @@ def test(gan_result_path, ground_truth_path):
     _, green_f, red_f = cv2.split(fake_copy)
     _, green_r, red_r = cv2.split(real_copy)
     # Convert to raw values
-    green_r = (green_r / 255) * 2.5
-    green_f = (green_f / 255) * 2.5
-    red_f = (red_f / 255) * 0.25
-    red_r = (red_r / 255) * 0.25
+    if not options.scale_off:
+        green_r = (green_r / 255) * 2.5
+        green_f = (green_f / 255) * 2.5
+        red_f = (red_f / 255) * 0.25
+        red_r = (red_r / 255) * 0.25
+    else:
+        green_r = (green_r / 255)
+        green_f = (green_f / 255)
+        red_f = (red_f / 255)
+        red_r = (red_r / 255)
     # Original
     original_fake = cv2.cvtColor(fake, cv2.COLOR_BGR2RGB)
     original_real = cv2.cvtColor(real, cv2.COLOR_BGR2RGB)
@@ -53,13 +59,15 @@ def test(gan_result_path, ground_truth_path):
     w = plt.imshow(green_f)
     plt.colorbar(w)
     plt.title('Reduced scattering $\mu_s$`'), plt.xticks([]), plt.yticks([])
-    plt.clim(0, 2.5)
+    if not options.scale_off:
+        plt.clim(0, 2.5)
     #
     plt.subplot(333)
     x = plt.imshow(red_f)
     plt.colorbar(x)
     plt.title('Absorption $\mu_a$'), plt.xticks([]), plt.yticks([])
-    plt.clim(0, 0.25)
+    if not options.scale_off:
+        plt.clim(0, 0.25)
     #
     plt.subplot(334)
     plt.imshow(original_real)
@@ -69,13 +77,15 @@ def test(gan_result_path, ground_truth_path):
     y = plt.imshow(green_r)
     plt.colorbar(y)
     plt.title('Reduced scattering $\mu_s$`'), plt.xticks([]), plt.yticks([])
-    plt.clim(0, 2.5)
+    if not options.scale_off:
+        plt.clim(0, 2.5)
     #
     plt.subplot(336)
     z = plt.imshow(red_r)
     plt.colorbar(z)
     plt.title('Absorption $\mu_a$'), plt.xticks([]), plt.yticks([])
-    plt.clim(0, 0.25)
+    if not options.scale_off:
+        plt.clim(0, 0.25)
     ### Difference ###
     combined_diff = diff_images(fake, real)
     abs_diff = diff_images(red_f, red_r)
@@ -239,7 +249,7 @@ def plot_op(options):
     if options.op > 999:
         print('WARNING options.op must be between 0-999 if over 1000 required change padding to 4')
     test(f'./results/{options.name}/test_latest/images/{options.op:03}_fake_B.png',
-         f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png')
+         f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png', options)
     get_abs_and_sct_NMAE(f'./results/{options.name}/test_latest/images/{options.op:03}_fake_B.png',
                          f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png', True)
 
@@ -254,6 +264,8 @@ if __name__ == '__main__':
                         help='Normalized mean absolute error for'
                              '[train/test] for [sct,abs,both]')
     parser.add_argument('--op', type=int, help='The sample number, see index.html in /results for more detail')
+    parser.add_argument('--scale_off', action='store_true', help='Gets Rid of all scaling for abs,sct and abs,'
+                                                                 'sct difference')
     options = parser.parse_args()
     if options.loss_epoch:
         plot_loss_epoch(options)
