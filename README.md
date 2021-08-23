@@ -2,6 +2,7 @@
 Code, dataset, and training models for a Generative Adversarial Network (GAN) produced during the Nottingham Summer Engineering Research Programme. The GAN is able to detect the changes in optical properties and by utilising Spatial Frequency Domain Imaging (SFDI), it can detect malformed tissue structures in rectangular and cylindrical geometries for simulated tissue. 
 
 
+Use of neural networks (a GAN) to process SFDI data:
 
 <img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Fig_1.jpg" width="512"/> 
 
@@ -29,6 +30,8 @@ GANPOP # Path to all the code
             ├── test
             └── train
 ```
+Input-Output Example: 
+
 <img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Figure2.jpg" width="512"/>
 
 ### Training
@@ -52,12 +55,13 @@ Ensure you type this in as a single line.
 - See the options folder for more options when training/testing 
 
 
+GANPOP Architecture:
 
 <img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Network.jpg" width="512"/> 
 
 ### Pre-trained Models
 
-Example pre-trained models for each experiment can be downloaded [here](Insert shared drive folder). 
+Example pre-trained models for each experiment can be downloaded [here](Insert shared drive folder). Include .pth files for rectangular and cylindrical.
 
 ### Testing
 
@@ -72,7 +76,7 @@ Ensure you type this in as a single line.
 
 ### Dataset
 
-The full-image dataset can be downloaded [here]. Folders are structured in the same way as pre-trained models. 
+The full-image dataset can be downloaded [here]. Include Blender datasets: rectangular and cylindrical
 
 ### Blender Model: How the data was generated
 
