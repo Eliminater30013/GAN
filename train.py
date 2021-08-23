@@ -4,6 +4,10 @@ from data import CreateDataLoader
 from models import create_model
 from util.visualizer import Visualizer
 
+# Some observations
+# Ideal number of epochs = 300 
+# Spatial frequency of AC > DC
+
 if __name__ == '__main__':
     opt = TrainOptions().parse()
     data_loader = CreateDataLoader(opt)
