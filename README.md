@@ -1,5 +1,5 @@
 # GANPOP
-Code, dataset, and trained models for a Generative Adversarial Network (GAN) created during the Nottingham Summer Engineering Research Programme. The GAN is able to detect the change in optical properties (GANPOP) and by utilising Spatial Frequency Domain Imaging (SFDI), it can detect malformed tissue structures indicative of early cancer.  
+Code, dataset, and trained models for a Generative Adversarial Network (GAN) created during the Nottingham Summer Engineering Research Programme. The GAN is able to detect the change in optical properties (hence GANPOP) and by utilising Spatial Frequency Domain Imaging (SFDI), it can detect malformed tissue structures indicative of early cancer.  
 
 
 
