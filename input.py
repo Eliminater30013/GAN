@@ -8,6 +8,7 @@ import argparse
 import os
 import shutil
 
+
 def split_image(path, show_image=False):
     image = cv2.imread(path)
     blue, green, red = cv2.split(image)
@@ -66,7 +67,7 @@ def load_images_in_folder(path_folder, ext="png"):  # extension, jpg,png etc
     return image_list
 
 
-def altElement(a, from_first=False):
+def alt_element(a, from_first=False):
     if from_first:
         return a[::2]
     else:
@@ -88,9 +89,9 @@ def normalize_by_reference(image_path, reference_path):
 
     hsv = cv2.cvtColor(test, cv2.COLOR_BGR2HSV)
     hsv = np.array(hsv, dtype=np.float64)
-    hsv[:, :, 1] = hsv[:, :, 1] * 1.3  ## scale pixel values up or down for channel 1(Lightness)
+    hsv[:, :, 1] = hsv[:, :, 1] * 1.3  # scale pixel values up or down for channel 1(Lightness)
     hsv[:, :, 1][hsv[:, :, 1] > 255] = 255
-    hsv[:, :, 2] = hsv[:, :, 2] * 1.3  ## scale pixel values up or down for channel 1(Lightness)
+    hsv[:, :, 2] = hsv[:, :, 2] * 1.3  # scale pixel values up or down for channel 1(Lightness)
     hsv[:, :, 2][hsv[:, :, 2] > 255] = 255
     hsv = np.array(hsv, dtype=np.uint8)
     test = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
@@ -109,7 +110,7 @@ def normalize_by_reference(image_path, reference_path):
 
 def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False):
     # Requires in and out files
-    input_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/in")
+    input_ac = load_images_in_folder(f"datasets/Blender/{experiment_name}/in")
     # If you don't have gnd_truths then make a folder for just testing containing white output files
     test_path = f"datasets/Blender/{experiment_name}/test"
     train_path = f"datasets/Blender/{experiment_name}/train"
@@ -118,20 +119,20 @@ def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False):
     if os.path.exists(train_path):
         shutil.rmtree(train_path)
     if no_gnd:
-        for counter in range(len(input_AC)):
+        for counter in range(len(input_ac)):
             # Ensure you have the white png file in main directory
-            stitch_images(input_AC[counter], Image.open('white.png'), test_path, counter + 1)
-        print(f'Testing dataset of size {counter+1} was created')
+            stitch_images(input_ac[counter], Image.open('white.png'), test_path, counter + 1)
+        print(f'Testing dataset of size {counter + 1} was created')
         return
     # Otherwise use ground truths
-    output_AC = load_images_in_folder(f"datasets/Blender/{experiment_name}/out")
+    output_ac = load_images_in_folder(f"datasets/Blender/{experiment_name}/out")
     # Split test/train datasets
-    X_train, X_test, y_train, y_test = train_test_split(input_AC, output_AC, test_size=test_size, random_state=seed)
+    x_train, x_test, y_train, y_test = train_test_split(input_ac, output_ac, test_size=test_size, random_state=seed)
     # Training samples
-    for counter1, (left, right) in enumerate(zip(X_train, y_train)):
+    for counter1, (left, right) in enumerate(zip(x_train, y_train)):
         stitch_images(left, right, train_path, counter1 + 1)
     # Testing samples
-    for counter2, (left, right) in enumerate(zip(X_test, y_test)):
+    for counter2, (left, right) in enumerate(zip(x_test, y_test)):
         stitch_images(left, right, test_path, counter2 + 1)
 
     print(f'Training dataset of size {counter1 + 1} and Testing dataset of size {counter2 + 1} were created')

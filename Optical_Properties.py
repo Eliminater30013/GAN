@@ -6,7 +6,7 @@ import regex as re
 import argparse
 
 
-## ADD error checking in future
+# ADD error checking in future
 # Aim to get both images identical via scaling
 # path to absorption and reduced scattering optical property maps (grayscale images)
 def show_gtruth(abs_path, sct_path):
@@ -25,7 +25,7 @@ def show_gtruth(abs_path, sct_path):
 
 
 def test(gan_result_path, ground_truth_path, options):
-    ## NEED TO SCALE IMAGES NOW AS BLENDER FILES CAN NOW BE LOADED IN TO PYCHARM
+    # NEED TO SCALE IMAGES NOW AS BLENDER FILES CAN NOW BE LOADED IN TO PYCHARM
 
     # Pick fake and real images to find absorption + reduced scattering
     fake = cv2.imread(gan_result_path)
@@ -49,7 +49,7 @@ def test(gan_result_path, ground_truth_path, options):
     # Original
     original_fake = cv2.cvtColor(fake, cv2.COLOR_BGR2RGB)
     original_real = cv2.cvtColor(real, cv2.COLOR_BGR2RGB)
-    #### PLOTTING ####
+    # PLOTTING
     plt.suptitle('Scattering + Absorption spectrum (in mm^-1)')
     plt.subplot(331)
     plt.imshow(original_fake)
