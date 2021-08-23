@@ -1,12 +1,9 @@
 # GANPOP
-Code, dataset, and trained models for "GANPOP: Generative Adversarial Network Prediction of Optical Properties from Single Snapshot Wide-field Images"
-
-If you use this code, please cite:
-
-Chen, Mason T., et al. "GANPOP: Generative Adversarial Network Prediction of Optical Properties from Single Snapshot Wide-field Images." IEEE Transactions on Medical Imaging (2019).
+Code, dataset, and trained models for a Generative Adversarial Network (GAN) created during the Nottingham Summer Engineering Research Programme. The GAN is able to detect the change in optical properties (GANPOP) and by utilising Spatial Frequency Domain Imaging (SFDI), it can detect malformed tissue structures indicative of early cancer.  
 
 
-<img src="https://github.com/masontchen/GANPOP_Pytorch/blob/master/imgs/Fig_1.jpg" width="512"/> 
+
+<img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Fig_1.jpg" width="512"/> 
 
 ## Setup
 
@@ -38,8 +35,7 @@ GANPOP_Pytorch # Path to all the code
 
 To train a model:
 ```
-python train.py --dataroot <datapath> --name <experiment_name>  --gpu_ids 0 --display_id 0 
---lambda_L1 60 --niter 100 --niter_decay 100 --pool_size 64 --loadSize 256 --fineSize 256 --gan_mode lsgan --lr 0.0002 --which_model_netG fusion
+python train.py --dataroot <datapath> --name <experiment_name>  --gpu_ids 0 --display_id 0 --lambda_L1 60 --niter 100 --niter_decay 100 --pool_size 64 --loadSize 256 --fineSize 256 --gan_mode lsgan --lr 0.0002 --which_model_netG fusion
 ```
 - To view epoch-wise intermediate training results, `./checkpoints/<experiment_name>/web/index.html`
 - `--lambda_L1` weight of L1 loss in the cost function
@@ -63,8 +59,7 @@ Example pre-trained models for each experiment can be downloaded [here](https://
 
 To test the model:
 ```
-python test.py --dataroot <datapath> --name <experiment_name> --gpu_ids 0 --display_id 0 
---loadSize 256 --fineSize 256 --model pix2pix --which_model_netG fusion
+python test.py --dataroot <datapath> --name <experiment_name> --gpu_ids 0 --display_id 0 --loadSize 256 --fineSize 256 --model pix2pix --which_model_netG fusion
 ```
 - The test results will be saved to a html file here: `./results/<experiment_name>/test_latest/index.html`.
 
@@ -72,30 +67,15 @@ python test.py --dataroot <datapath> --name <experiment_name> --gpu_ids 0 --disp
 
 The full-image dataset can be downloaded [here](https://drive.google.com/drive/folders/1o_hIv5xmkO1_jD34Jo6JD0V1kXm5SdiM?usp=sharing). Folders are structured in the same way as pre-trained models (AC and DC, with "corr" being profilometry-corrected). Please refer to README.txt for more details.
 
-### Issues
-
-- Please open new threads or report issues to mason@jhmi.edu
-
-## License
-© [Durr Lab](https://durr.jhu.edu) - This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
 
 ## Acknowledgments
-- This code is inspired by [pytorch-CycleGAN-and-pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) and [FusionNet_Pytorch](https://github.com/GunhoChoi/FusionNet_Pytorch)
-* Subsidized computing resources were provided by Google Cloud.
+- The GANPOP structure was created by Mason Chen and his fellows. Their research paper can be found here: 
+[Chen, Mason T., et al. "GANPOP: Generative Adversarial Network Prediction of Optical Properties from Single Snapshot Wide-field Images." IEEE Transactions on Medical Imaging (2019).](https://ieeexplore.ieee.org/document/8943974)
+- The code was also inspired by [pytorch-CycleGAN-and-pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) and [FusionNet_Pytorch](https://github.com/GunhoChoi/FusionNet_Pytorch) which were the skeleton of the GANPOP architecture.
 
-## Reference
-If you find our work useful in your research please consider citing our paper:
-```
-@article{chen2019ganpop,
-  title={GANPOP: Generative Adversarial Network Prediction of Optical Properties from Single Snapshot Wide-field Images},
-  author={Chen, Mason T and Mahmood, Faisal and Sweer, Jordan A and Durr, Nicholas J},
-  journal={IEEE Transactions on Medical Imaging},
-  year={2019},
-  publisher={IEEE}
-}
-```
-# Structure of the GANPOP
-    1. Generate a DATASET, containing an input image (in) and a ground truth (out) that is 256*256*3
+
+## Structure of the GANPOP
+      1. Generate a DATASET, containing an input image (in) and a ground truth (out) that is 256*256*3
         a. Pair these images together to a 512*256*3 then split the image dataset to training (train) and
            testing (test).
         b. All dataset related functions can be found in input.py. Make sure to run input.py first if you
