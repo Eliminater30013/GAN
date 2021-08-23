@@ -1,4 +1,4 @@
-#Structure of the GANPOP
+# Structure of the GANPOP
     1. Generate a DATASET, containing an input image (in) and a ground truth (out) that is 256*256*3
         a. Pair these images together to a 512*256*3 then split the image dataset to training (train) and
            testing (test).
@@ -25,7 +25,7 @@
     4. Check your training in the ./checkpoints folder and testing in the ./results folder.
     5. After testing, run Optical_Properties.py to see the optical properties of the image. Extra helper functions can
        also be found in this file as well
-###In Essence:
+### In Essence:
         ideal epoch = 300 AC > DC
         Blender->dataset->input.py->GANPOP[Train->Test]->Optical_Properties.py
 
