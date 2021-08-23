@@ -37,8 +37,7 @@ To train a model:
 ```
 python train.py --dataroot <datapath> --name <experiment_name>  --gpu_ids 0 --display_id 0 --lambda_L1 60 --niter 100 --niter_decay 100 --pool_size 64 --loadSize 256 --fineSize 256 --gan_mode lsgan --lr 0.0002 --which_model_netG fusion
 ```
-Ensure you type this in as a single line. Note:
-where 
+Ensure you type this in as a single line. 
       
 - To view epoch-wise intermediate training results, `./checkpoints/<experiment_name>/web/index.html`
 - `<datapath>` root path to your test/train dataset e.g './datasets/XYZ_Dataset', where XYZ_Dataset is the dataset name
@@ -50,6 +49,9 @@ where
 - `--lr` learning rate
 - `--gan_mode` type of GAN used, either lsgan or vanilla
 - `--which_model_netG` generator type; fusion, unet_256, or resnet_9blocks
+- See the options folder for more options when training/testing 
+
+
 
 <img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Network.jpg" width="512"/> 
 
@@ -63,29 +65,29 @@ To test the model:
 ```
 python test.py --dataroot <datapath> --name <experiment_name> --gpu_ids 0 --display_id 0 --loadSize 256 --fineSize 256 --model pix2pix --which_model_netG fusion
 ```
-where <experiment_name> is the name of experiment containing .pth files
-            
+Ensure you type this in as a single line. 
+
+- where <experiment_name> is the name of experiment containing .pth files          
 - The test results will be saved to a html file here: `./results/<experiment_name>/test_latest/index.html`.
 
 ### Dataset
 
-The full-image dataset can be downloaded [here](https://drive.google.com/drive/folders/1o_hIv5xmkO1_jD34Jo6JD0V1kXm5SdiM?usp=sharing). Folders are structured in the same way as pre-trained models (AC and DC, with "corr" being profilometry-corrected). Please refer to README.txt for more details.
+The full-image dataset can be downloaded [here]. Folders are structured in the same way as pre-trained models. 
 
 ### Blender Model: How the data was generated
-            
-## Acknowledgments
-- The GANPOP structure was created by Mason Chen and his fellows. Their research paper can be found here: 
-[Chen, Mason T., et al. "GANPOP: Generative Adversarial Network Prediction of Optical Properties from Single Snapshot Wide-field Images." IEEE Transactions on Medical Imaging (2019).](https://ieeexplore.ieee.org/document/8943974)
-- The code was also inspired by [pytorch-CycleGAN-and-pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) and [FusionNet_Pytorch](https://github.com/GunhoChoi/FusionNet_Pytorch) which were the skeleton of the GANPOP architecture.
 
 
 ## In Essence
 - Generate a DATASET (with Blender for example), containing an input image (in) and a ground truth (out) that is 256x256x3. Pair these images together to make a 512x256x3 then split the image dataset to training (train) and testing (test). All dataset related functions can be found in input.py. Make sure to run *input.py* first if you wanted to create your own test/train folders. 
-- Train the model on the dataset and at the end of training a .pth file will be generated for both the generator and discriminator (latest_net_G.pth or latest_net_D.pth). Once trained, the results will be saved `./checkpoints/<experiment_name>/web/index.html`
+- Train the model on the dataset and at the end of training a .pth file will be generated for both the generator and discriminator (latest_net_G.pth or latest_net_D.pth). 
+- Once trained, the results will be saved `./checkpoints/<experiment_name>/web/index.html`
 - Alternatively, if you haven't trained but instead just want to Test certain models ensure you have the latest .pth files stored in `./checkpoints/<experiment_name>`, or alternatively invoke --which_epoch option with the epoch.pth file e.g. for 20_net_\[D/G].pth simple type --which_epoch 20.
-                  *FOR EXTRA OPTIONS FOR TRAINING AND TESTING SEE THE OPTIONS FOLDER!!!*
-E.G. Note that if Load size and and fine size is changed to X then you can provide a XxXx3 image instead
 - Once tested, the results will be saved `./results/<experiment_name>/test_latest/index.html`.
-- After testing, run Optical_Properties.py to see the optical properties of the image. Extra helper functions can also be found in this file as well. 
+- After testing, run *Optical_Properties.py* to see the optical properties of the image. Extra helper functions can also be found in this file as well. 
+
+        Blender->dataset->input.py->GANPOP\[Train->Test]->Optical_Properties.py
         
-        Blender->dataset->input.py->GANPOP[Train->Test]->Optical_Properties.py
+## Acknowledgments
+- The GANPOP structure was created by Mason Chen and his fellows. Their research paper can be found here: 
+[Chen, Mason T., et al. "GANPOP: Generative Adversarial Network Prediction of Optical Properties from Single Snapshot Wide-field Images." IEEE Transactions on Medical Imaging (2019).](https://ieeexplore.ieee.org/document/8943974)
+- The code was also inspired by [pytorch-CycleGAN-and-pix2pix](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix) and [FusionNet_Pytorch](https://github.com/GunhoChoi/FusionNet_Pytorch) which were the skeleton of the GANPOP architecture.
