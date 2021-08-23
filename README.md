@@ -1,5 +1,5 @@
-# GANPOP
-Code, dataset, and trained models for a Generative Adversarial Network (GAN) created during the Nottingham Summer Engineering Research Programme. The GAN is able to detect the change in optical properties (hence GANPOP) and by utilising Spatial Frequency Domain Imaging (SFDI), it can detect malformed tissue structures indicative of early cancer.  
+# GANPOP: Generative Adversarial Network Prediction of Optical Properties
+Code, dataset, and training models for a Generative Adversarial Network (GAN) produced during the Nottingham Summer Engineering Research Programme. The GAN is able to detect the changes in optical properties and by utilising Spatial Frequency Domain Imaging (SFDI), it can detect malformed tissue structures in rectangular and cylindrical geometries for simulated tissue. 
 
 
 
@@ -9,9 +9,9 @@ Code, dataset, and trained models for a Generative Adversarial Network (GAN) cre
 
 ### Prerequisites
 
-- Linux (Tested on Ubuntu 16.04)
-- NVIDIA GPU (Tested on Nvidia P100 using Google Cloud)
-- CUDA CuDNN (CPU mode and CUDA without CuDNN may work with minimal modification, but untested)
+- Linux (Tested on Ubuntu 20.04)
+- NVIDIA GPU (Tested on Nvidia Geforce GTX 980)
+- CUDA CuDNN
 - Pytorch>=0.4.0
 - torchvision>=0.2.1
 - dominate>=2.3.1
@@ -23,13 +23,13 @@ Code, dataset, and trained models for a Generative Adversarial Network (GAN) cre
 All image pairs must be 256x256 and paired together in 256x512 images. '.png' and '.jpg' files are acceptable. Data needs to be arranged in the following order:
 
 ```bash
-GANPOP_Pytorch # Path to all the code
-└── Datasets # Datasets folder
+GANPOP # Path to all the code
+└── datasets # Datasets folder
       └── XYZ_Dataset # Name of your dataset
             ├── test
             └── train
 ```
-<img src="https://github.com/masontchen/GANPOP_Pytorch/blob/master/imgs/Figure2.jpg" width="512"/>
+<img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Figure2.jpg" width="512"/>
 
 ### Training
 
@@ -37,7 +37,12 @@ To train a model:
 ```
 python train.py --dataroot <datapath> --name <experiment_name>  --gpu_ids 0 --display_id 0 --lambda_L1 60 --niter 100 --niter_decay 100 --pool_size 64 --loadSize 256 --fineSize 256 --gan_mode lsgan --lr 0.0002 --which_model_netG fusion
 ```
+Ensure you type this in as a single line. Note:
+where 
+      
 - To view epoch-wise intermediate training results, `./checkpoints/<experiment_name>/web/index.html`
+- `<datapath>` root path to your test/train dataset e.g './datasets/XYZ_Dataset', where XYZ_Dataset is the dataset name
+- `<experiment_name>` name of the experiment
 - `--lambda_L1` weight of L1 loss in the cost function
 - `--niter` number of epochs with constant learning rate 
 - `--niter_decay` number of epochs with linearly decaying learning rate
@@ -61,13 +66,16 @@ To test the model:
 ```
 python test.py --dataroot <datapath> --name <experiment_name> --gpu_ids 0 --display_id 0 --loadSize 256 --fineSize 256 --model pix2pix --which_model_netG fusion
 ```
+where <experiment_name> is the name of experiment containing .pth files
+            
 - The test results will be saved to a html file here: `./results/<experiment_name>/test_latest/index.html`.
 
 ### Dataset
 
 The full-image dataset can be downloaded [here](https://drive.google.com/drive/folders/1o_hIv5xmkO1_jD34Jo6JD0V1kXm5SdiM?usp=sharing). Folders are structured in the same way as pre-trained models (AC and DC, with "corr" being profilometry-corrected). Please refer to README.txt for more details.
 
-
+### Blender Model: How to use
+            
 ## Acknowledgments
 - The GANPOP structure was created by Mason Chen and his fellows. Their research paper can be found here: 
 [Chen, Mason T., et al. "GANPOP: Generative Adversarial Network Prediction of Optical Properties from Single Snapshot Wide-field Images." IEEE Transactions on Medical Imaging (2019).](https://ieeexplore.ieee.org/document/8943974)
@@ -75,32 +83,24 @@ The full-image dataset can be downloaded [here](https://drive.google.com/drive/f
 
 
 ## Structure of the GANPOP
-      1. Generate a DATASET, containing an input image (in) and a ground truth (out) that is 256*256*3
-        a. Pair these images together to a 512*256*3 then split the image dataset to training (train) and
-           testing (test).
-        b. All dataset related functions can be found in input.py. Make sure to run input.py first if you
-           wanted to create your own test/train folders. Otherwise follow the structure shown in README
-    2. Now if you want to TRAIN your model, run the bash script [TODO: Make bash script] or type this into
-       The terminal:
-           " python train.py --dataroot <datapath> --name <experiment_name>  --gpu_ids 0 --display_id 0 --lambda_L1 60 
-             --niter 100 --niter_decay 100 --pool_size 64 --loadSize 256 --fineSize 256 
-             --gan_mode lsgan --lr 0.0002 --which_model_netG fusion " [SINGLE LINE]
-       Where the <datapath> is the root path to your test/train dataset e.g. './datasets/DATA' , 
-       Where DATA is dataset folder containing test/train
-       And <experiment_name> = Your choice of experiment name.N.B. This will contain the discriminator and generator pth
-       files (latest_net_D.pth or latest_net_G.pth) after training. If you haven't trained but instead want to just test
-       certain models, please rename you discriminator and generator .pth files to latest_net_X.pth where X is either D
-       or G respectively. 
-    3. Now if you want TEST your model use [TODO: Make bash script] or type this into The terminal:
-       " python test.py --dataroot <datapath> --name <experiment_name> 
-       --gpu_ids 0 --display_id 0 --loadSize 256 --fineSize 256 --model pix2pix --which_model_netG fusion ".
-       
-                    FOR EXTRA OPTIONS FOR TRAINING AND TESTING SEE THE OPTIONS FOLDER!!!
-        E.G. Note that if Load size and and fine size is changed to X then you can provide a X*X*3 image instead
-        
-    4. Check your training in the ./checkpoints folder and testing in the ./results folder.
-    5. After testing, run Optical_Properties.py to see the optical properties of the image. Extra helper functions can
-       also be found in this file as well
+- Generate a DATASET, containing an input image (in) and a ground truth (out) that is 256x256x3. Pair these images together to a 512x256x3 then split the image dataset to training (train) and testing (test). All dataset related functions can be found in input.py. Make sure to run *input.py* first if you wanted to create your own test/train folders. 
+2. Now if you want to TRAIN your model type this into the terminal:
+" python train.py --dataroot <datapath> --name <experiment_name>  --gpu_ids 0 --display_id 0 --lambda_L1 60 
+--niter 100 --niter_decay 100 --pool_size 64 --loadSize 256 --fineSize 256 
+--gan_mode lsgan --lr 0.0002 --which_model_netG fusion " [SINGLE LINE]
+Where the <datapath> is the root path to your test/train dataset e.g. './datasets/DATA' , 
+Where DATA is dataset folder containing test/train
+And <experiment_name> = Your choice of experiment name.N.B. This will contain the discriminator and generator pth
+files (latest_net_D.pth or latest_net_G.pth) after training. If you haven't trained but instead want to just test
+certain models, please rename you discriminator and generator .pth files to latest_net_X.pth where X is either D
+or G respectively. 
+      
+FOR EXTRA OPTIONS FOR TRAINING AND TESTING SEE THE OPTIONS FOLDER!!!
+E.G. Note that if Load size and and fine size is changed to X then you can provide a X*X*3 image instead
+
+4. Check your training in the ./checkpoints folder and testing in the ./results folder.
+5. After testing, run Optical_Properties.py to see the optical properties of the image. Extra helper functions can
+also be found in this file as well
 ### In Essence:
         ideal epoch = 300 AC > DC
         Blender->dataset->input.py->GANPOP[Train->Test]->Optical_Properties.py
