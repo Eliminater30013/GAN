@@ -98,7 +98,7 @@ If final fact is increased from 0.1->0.9 then R is decreased 0.45->0.05 and G is
 - Generate a DATASET (with Blender for example), containing an input image (in) and a ground truth (out) that is 256x256x3. Pair these images together to make a 512x256x3 then split the image dataset to training (train) and testing (test). All dataset related functions can be found in input.py. Make sure to run *input.py* first if you wanted to create your own test/train folders. 
 - Train the model on the dataset and at the end of training a .pth file will be generated for both the generator and discriminator (latest_net_G.pth or latest_net_D.pth). 
 - Once trained, the results will be saved `./checkpoints/<experiment_name>/web/index.html`
-- Alternatively, if you haven't trained but instead just want to Test certain models ensure you have the latest .pth files stored in `./checkpoints/<experiment_name>`, or alternatively invoke --which_epoch option with the epoch.pth file e.g. for 20_net_\[D/G].pth simple type --which_epoch 20.
+- Alternatively, if you haven't trained but instead just want to Test certain models ensure you have the latest .pth files stored in `./checkpoints/<experiment_name>`, or alternatively invoke `--which_epoch` option with the epoch.pth file e.g. for 20_net_\[D/G].pth simple type `--which_epoch 20`
 - Once tested, the results will be saved `./results/<experiment_name>/test_latest/index.html`.
 - After testing, run *Optical_Properties.py* to see the optical properties of the image. Extra helper functions can also be found in this file as well. 
 
