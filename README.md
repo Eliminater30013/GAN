@@ -1,11 +1,6 @@
 # GANPOP: Generative Adversarial Network Prediction of Optical Properties
 Code, dataset, and training models for a Generative Adversarial Network (GAN) produced during the Nottingham Summer Engineering Research Programme. The GAN is able to detect the changes in optical properties and by utilising Spatial Frequency Domain Imaging (SFDI), it can detect malformed tissue structures in rectangular and cylindrical geometries for simulated tissue. Adapted from Mason Chen's GANPOP model which can be found [here](https://github.com/masontchen/GANPOP_Pytorch)
 
-
-Use of neural networks (a GAN) to process SFDI data:
-
-<img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Fig_1.jpg" width="512"/> 
-
 ## Setup
 
 ### Prerequisites
@@ -104,11 +99,7 @@ If final fact is increased from 0.1->0.9 then R is decreased 0.45->0.05 and G is
 
 ## Pipeline
 
-Proof of Concept:
-
 <img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/concept.png">
-
-Blender->dataset->input.py->GANPOP\[Train->Test]->Optical_Properties.py
         
 ## Acknowledgments
 - The GANPOP structure was created by Mason Chen and his fellows. Their research paper can be found here: 
