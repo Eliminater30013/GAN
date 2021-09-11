@@ -27,7 +27,9 @@ GANPOP # Path to all the code
 ```
 Input-Output Example: 
 
-<img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Figure2.jpg" width="512"/>
+<img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Figure2.jpg" width="512">
+
+_Source: MasontChen_
 
 ### Training
 
@@ -53,6 +55,8 @@ Ensure you type this in as a single line.
 GANPOP Architecture:
 
 <img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Network.jpg" width="512"/> 
+
+_Source: MasontChen_
 
 ### Pre-trained Models
 
