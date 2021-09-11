@@ -6,6 +6,7 @@ Use of neural networks (a GAN) to process SFDI data:
 
 <img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Fig_1.jpg" width="512"/> 
 
+<img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/GAN%20structure.png" width="512">
 ## Setup
 
 ### Prerequisites
