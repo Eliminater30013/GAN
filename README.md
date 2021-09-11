@@ -6,7 +6,6 @@ Use of neural networks (a GAN) to process SFDI data:
 
 <img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/Fig_1.jpg" width="512"/> 
 
-<img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/GAN%20structure.png" width="512">
 ## Setup
 
 ### Prerequisites
@@ -104,6 +103,10 @@ If final fact is increased from 0.1->0.9 then R is decreased 0.45->0.05 and G is
 - After testing, run *Optical_Properties.py* to see the optical properties of the image. Extra helper functions can also be found in this file as well. 
 
 ## Pipeline
+
+Proof of Concept:
+
+<img src="https://github.com/Eliminater30013/GAN/blob/main/imgs/concept.png">
 
 Blender->dataset->input.py->GANPOP\[Train->Test]->Optical_Properties.py
         
