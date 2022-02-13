@@ -83,15 +83,15 @@ The rectangular dataset was generated using *Rec.blend*, the rectangular tumour 
 
 For both datasets:
 
-- `final fact` was varied between 0.1 and 0.9
-- `abs` and `sct` fact was kept at 0.5.
-- `R` and `G` channels were varied between 0.05 and 0.45
+- `final fact` was varied between 0.05 and 0.95
+- `abs` and `sct` fact was kept at 1.0.
+- `R` and `G` channels were varied between 0.05 and 0.95
 
 **N.B.** It may be easier to 'continue_train'/ transfer the learning from one of the already existing models provided as the GAN may take a couple of tries to produce the required output
 
 Example:
 
-If final fact is increased from 0.1->0.9 then R is decreased 0.45->0.05 and G is increased from 0.05->0.45. This is due to the proprtions of abs:sct would change from 0.45:0.05 to 0.05:0.45
+If final fact is increased from 0.05->0.95 then R is decreased 0.95->0.05 and G is increased from 0.05->0.95. This is due to the proportions of abs:sct would change from 0.95:0.05 to 0.05:0.95
 
 ## In Essence
 - Generate a DATASET (with Blender for example), containing an input image (in) and a ground truth (out) that is 256x256x3. Pair these images together to make a 512x256x3 then split the image dataset to training (train) and testing (test). All dataset related functions can be found in input.py. Make sure to run *input.py* first if you wanted to create your own test/train folders. 
