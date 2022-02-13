@@ -20,9 +20,9 @@ def split_image(path, show_image=False):
     return blue, green, red
 
 
-def combine_images(red_path, green_path, blue_path=None, show_image=False, write=False):
-    red_channel = red_path  # cv2.imread(red_path, cv2.IMREAD_GRAYSCALE)  # green
-    green_channel = green_path  # cv2.imread(green_path, cv2.IMREAD_GRAYSCALE)  # red
+def combine_images(red_path, green_path, blue_path=None, show_image=False, write=None):
+    red_channel = cv2.imread(red_path, cv2.IMREAD_GRAYSCALE)  # red
+    green_channel = cv2.imread(green_path, cv2.IMREAD_GRAYSCALE)  # green
     if blue_path:
         blue_channel = cv2.imread(blue_path, cv2.IMREAD_GRAYSCALE)
     else:
@@ -36,8 +36,13 @@ def combine_images(red_path, green_path, blue_path=None, show_image=False, write
         cv2.imshow('combined', combined)
         cv2.waitKey(0)
     if write:
-        cv2.imwrite("datasets/OLD/DC/test/06.png", combined)
+        cv2.imwrite(write, combined)
     return combined
+
+
+def remove_blue(path_folder, output):
+    for i, filename in enumerate(glob.glob(f'{path_folder}/*')):
+        combine_images(filename, filename, write=f"{output}/{i:03}.png")
 
 
 def stitch_images(left_image, right_image, output_folder, counter):
@@ -108,7 +113,7 @@ def normalize_by_reference(image_path, reference_path):
     # cv2.waitKey(0)
 
 
-def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False):
+def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False, not_random=False):
     # Requires in and out files
     input_ac = load_images_in_folder(f"datasets/Blender/{experiment_name}/in")
     # If you don't have gnd_truths then make a folder for just testing containing white output files
@@ -127,7 +132,11 @@ def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False):
     # Otherwise use ground truths
     output_ac = load_images_in_folder(f"datasets/Blender/{experiment_name}/out")
     # Split test/train datasets
-    x_train, x_test, y_train, y_test = train_test_split(input_ac, output_ac, test_size=test_size, random_state=seed)
+    if not_random:
+        x_train, x_test, y_train, y_test = train_test_split(input_ac, output_ac, test_size=test_size, shuffle=False)
+
+    else:
+        x_train, x_test, y_train, y_test = train_test_split(input_ac, output_ac, test_size=test_size, random_state=seed)
     # Training samples
     for counter1, (left, right) in enumerate(zip(x_train, y_train)):
         stitch_images(left, right, train_path, counter1 + 1)
@@ -137,9 +146,12 @@ def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False):
 
     print(f'Training dataset of size {counter1 + 1} and Testing dataset of size {counter2 + 1} were created')
 
-
+#WINNER IS F007
 if __name__ == "__main__":
     # Set up a Parser for Data Preparation
+    # remove_blue("datasets/Blender/test_patches/test", f"E:/ahmed/Latest_GANPOP/datasets/Blender/test_patches"
+    #                                                   f"/test_no_blue")
+    # exit()
     parser = argparse.ArgumentParser(description='Run data preprocessing')
     parser.add_argument('--name', type=str, required=True, help='Name of the Experiment')
     parser.add_argument('--test_size', type=float, default=0.3, help='Size of test dataset')
@@ -147,5 +159,6 @@ if __name__ == "__main__":
                                                                'left default a new dataset will always be generated')
     parser.add_argument('--no_gnd', action='store_true', help='Enable this if you do not have a ground truth. Creates '
                                                               'test folder only')
+    parser.add_argument('--not_random', action='store_true', help='Enable this if nor random')
     options = parser.parse_args()
-    split_dataset(experiment_name=options.name, test_size=options.test_size, seed=options.seed, no_gnd=options.no_gnd)
+    split_dataset(experiment_name=options.name, test_size=options.test_size, seed=options.seed, no_gnd=options.no_gnd, not_random=options.not_random)
