@@ -60,7 +60,7 @@ _Source: MasontChen_
 
 ### Pre-trained Models
 
-Example pre-trained models for each experiment can be downloaded [here](https://drive.google.com/drive/folders/12CJAjLMqeJFIZurhEkElB0ERpfz3RGKD?usp=sharing).
+Example pre-trained models for each experiment can be downloaded [here](https://drive.google.com/drive/folders/1eO_pzfuu87Mon0gTXrhw_rgr-41CbjWJ?usp=sharing).
 
 ### Testing
 
@@ -75,7 +75,7 @@ Ensure you type this in as a single line.
 
 ### Dataset
 
-The full-image dataset can be downloaded [here](https://drive.google.com/drive/folders/12CJAjLMqeJFIZurhEkElB0ERpfz3RGKD?usp=sharing).
+The full-image dataset can be downloaded [here](https://drive.google.com/drive/folders/1k24o3EtQVc5KYrjWpOQH3enuVdcXHmRj?usp=sharing).
 
 ### Blender Model: How the data was generated
 
