@@ -42,7 +42,7 @@ def combine_images(red_path, green_path, blue_path=None, show_image=False, write
 
 def remove_blue(path_folder, output):
     for i, filename in enumerate(glob.glob(f'{path_folder}/*')):
-        combine_images(filename, filename, write=f"{output}/{i:03}.png")
+        combine_images(filename, filename, write=f"{output}/{i+1:04}.png")
 
 
 def stitch_images(left_image, right_image, output_folder, counter):
@@ -113,9 +113,13 @@ def normalize_by_reference(image_path, reference_path):
     # cv2.waitKey(0)
 
 
-def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False, not_random=False):
+def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False, not_random=False, no_blue=False):
     # Requires in and out files
-    input_ac = load_images_in_folder(f"datasets/Blender/{experiment_name}/in")
+    folder = "in"
+    if no_blue:
+        remove_blue(f"datasets/Blender/{experiment_name}/in", f"datasets/Blender/{experiment_name}/in2")
+        folder = "in2"
+    input_ac = load_images_in_folder(f"datasets/Blender/{experiment_name}/{folder}")
     # If you don't have gnd_truths then make a folder for just testing containing white output files
     test_path = f"datasets/Blender/{experiment_name}/test"
     train_path = f"datasets/Blender/{experiment_name}/train"
@@ -159,6 +163,7 @@ if __name__ == "__main__":
                                                                'left default a new dataset will always be generated')
     parser.add_argument('--no_gnd', action='store_true', help='Enable this if you do not have a ground truth. Creates '
                                                               'test folder only')
-    parser.add_argument('--not_random', action='store_true', help='Enable this if nor random')
+    parser.add_argument('--not_random', action='store_true', help='Enable this if not random')
+    parser.add_argument('--no_blue', action='store_true', help='Enable this if no blue channel')
     options = parser.parse_args()
-    split_dataset(experiment_name=options.name, test_size=options.test_size, seed=options.seed, no_gnd=options.no_gnd, not_random=options.not_random)
+    split_dataset(experiment_name=options.name, test_size=options.test_size, seed=options.seed, no_gnd=options.no_gnd, not_random=options.not_random, no_blue=options.no_blue)
