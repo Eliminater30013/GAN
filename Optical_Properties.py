@@ -324,8 +324,8 @@ def plot_scatter(options):
     sct = np.array(sct)*100 #NMAE as a %
     #abso = reject_outliers(abso)
     #sct = reject_outliers(sct)
-    print("Average abs % " + str(np.average(abso)))
-    print("Average sct % " + str(np.average(sct)))
+    print("Average abs " + str(np.average(abso)) + "%")
+    print("Average sct " + str(np.average(sct)) + "%")
     plt.plot(abso, sct, 'o',label="Dataset: " + options.name);
     #plt.legend()
     plt.xlabel('Normalised Absorption, $\mu_a$ (%)')
