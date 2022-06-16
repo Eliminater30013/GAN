@@ -1,3 +1,4 @@
+# Required Libraries
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
@@ -5,22 +6,30 @@ import glob
 import regex as re
 import argparse
 from PIL import Image
-import os,os.path
+import os, os.path
+from scipy.stats import linregress
 
-# ADD error checking in future
-# Aim to get both images identical via scaling
-# path to absorption and reduced scattering optical property maps (grayscale images)
+# Offsets + scaling if required. Can be done in Blender as well. Leave as [1,0,1,0] if no scaling needed
+ABS_MUL = 1
+ABS_OFF = 0
+SCT_MUL = 1
+SCT_OFF = 0
+# EQ: ABS_MUL * x + ABS_OFF
+# EQ: SCT_MUL * y + SCT_OFF
 
 
-def count_files(path):
-    return int(len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]) / 3)
+# Count the number of files in folder, give a num variable if you have pairs (2) or triplets (3) of images
+def count_files(path, num=1):
+    return int(len([name for name in os.listdir(path) if os.path.isfile(os.path.join(path, name))]) / num)
 
 
+# Show the ground truth on matplotlib ie display
 def show_gtruth(abs_path, sct_path):
-    absorb = cv2.imread(abs_path, cv2.IMREAD_GRAYSCALE)
-    sct = cv2.imread(sct_path, cv2.IMREAD_GRAYSCALE)
+    absorb = cv2.imread(abs_path, cv2.IMREAD_GRAYSCALE)  # get  abs
+    sct = cv2.imread(sct_path, cv2.IMREAD_GRAYSCALE)  # get sct
     sct = (sct / 255) * 2.5  # convert back to real values
     absorb = (absorb / 255) * 0.25  # convert back to real values
+    # Display on matplotlib GUI
     plt.suptitle('Scattering + Absorption spectrum (in mm^-1)')
     plt.subplot(121)
     plt.imshow(absorb)
@@ -31,30 +40,31 @@ def show_gtruth(abs_path, sct_path):
     plt.show()
 
 
+# Get the GAN and ground truth results and compare them on matplotlib GUI
 def test(gan_result_path, ground_truth_path, options):
-    # NEED TO SCALE IMAGES NOW AS BLENDER FILES CAN NOW BE LOADED IN TO PYCHARM
-
     # Pick fake and real images to find absorption + reduced scattering
     fake = cv2.imread(gan_result_path)
     real = cv2.imread(ground_truth_path)
-    fake_copy = fake.copy()
-    real_copy = real.copy()
     # Get scattering and absorption spectrum thx to Green/Red separation
-    _, green_f, red_f = cv2.split(fake_copy)
-    _, green_r, red_r = cv2.split(real_copy)
-    # Convert to raw values
-    if not options.scale_off:
+    blue_f, green_f, red_f = cv2.split(fake)
+    _, green_r, red_r = cv2.split(real)
+    # Convert to raw values and do an appropriate pre-scaling to GAN result
+    green_f = cv2.add(cv2.multiply(green_f, SCT_MUL), SCT_OFF)
+    red_f = cv2.add(cv2.multiply(red_f, ABS_MUL), ABS_OFF)
+    merged_fake = cv2.merge([blue_f, green_f, red_f])
+    if not options.scale_off: # if we need to scale the Ground truth file to Chen's range
         green_r = (green_r / 255) * 2.5
         green_f = (green_f / 255) * 2.5
         red_f = (red_f / 255) * 0.25
         red_r = (red_r / 255) * 0.25
-    else:
+    else: # otherwise get raw result
         green_r = (green_r / 255)
         green_f = (green_f / 255)
         red_f = (red_f / 255)
         red_r = (red_r / 255)
-    # Original
-    original_fake = cv2.cvtColor(fake, cv2.COLOR_BGR2RGB)
+    # Get the REAL and FAKE data ready to display
+    original_fake = cv2.cvtColor(merged_fake, cv2.COLOR_BGR2RGB)
+    #original_fake = cv2.cvtColor(fake, cv2.COLOR_BGR2RGB)
     original_real = cv2.cvtColor(real, cv2.COLOR_BGR2RGB)
     # ### Difference ###
     combined_diff = diff_images(fake, real)
@@ -67,15 +77,15 @@ def test(gan_result_path, ground_truth_path, options):
     plt.title('FAKE'), plt.xticks([]), plt.yticks([])
     #
     plt.subplot(332)
-    w = plt.imshow(green_f)
+    w = plt.imshow(green_r)
     plt.colorbar(w)
     plt.title('Reduced scattering $\mu_s$`')
     plt.xticks([]), plt.yticks([])
     if not options.scale_off:
         plt.clim(0, 2.5)
     #
-    plt.subplot(333)
-    x = plt.imshow(red_f)
+    plt.subplot(335)
+    x = plt.imshow(red_r)
     plt.colorbar(x)
     plt.title('Absorption $\mu_a$')
     plt.xticks([]), plt.yticks([])
@@ -86,8 +96,8 @@ def test(gan_result_path, ground_truth_path, options):
     plt.imshow(original_real)
     plt.title('REAL'), plt.xticks([]), plt.yticks([])
 
-    plt.subplot(335)
-    y = plt.imshow(green_r)
+    plt.subplot(333)
+    y = plt.imshow(green_f)
     plt.colorbar(y)
     plt.title('Reduced scattering $\mu_s$`')
     plt.xticks([]), plt.yticks([])
@@ -95,13 +105,12 @@ def test(gan_result_path, ground_truth_path, options):
         plt.clim(0, 2.5)
     #
     plt.subplot(336)
-    z = plt.imshow(red_r)
+    z = plt.imshow(red_f)
     plt.colorbar(z)
     plt.title('Absorption $\mu_a$')
     plt.xticks([]), plt.yticks([])
     if not options.scale_off:
         plt.clim(0, .25)
-
     #
     plt.subplot(337)
     plt.imshow(combined_diff.astype('uint8'))
@@ -110,44 +119,112 @@ def test(gan_result_path, ground_truth_path, options):
     plt.subplot(338)
     z = plt.imshow(sct_diff)
     plt.colorbar(z)
-    plt.title('Sct diff'), plt.xticks([]), plt.yticks([])
+    plt.title('Sct diff')
+    plt.xticks([]), plt.yticks([])
     plt.clim(0, 100)
     #
     plt.subplot(339)
     z = plt.imshow(abs_diff)
     plt.colorbar(z)
-    plt.title('Abs Diff'), plt.xticks([]), plt.yticks([])
+    plt.title('Abs Diff')
+    plt.xticks([]), plt.yticks([])
     plt.clim(0, 100)
     #
+    plt.show() # show the result
+
+
+# Function used to check if the scale we used is correct. Fits a linear regression line to FAKE and REAL.
+# If gradient is near 1 and y intercept is near 0 then we have used good enough scaling factors
+def test2(options):
+    all_red_f = []
+    all_red_r = []
+    all_green_r = []
+    all_green_f = []
+    num = count_files(f'./results/{options.name}/test_latest/images/')
+    print(num)
+    for x in range(num):
+        # Pick fake and real images to find absorption + reduced scattering
+        gan_result_path = f'./results/{options.name}/test_latest/images/{x+1:03}_fake_B.png'
+        ground_truth_path = f'./results/{options.name}/test_latest/images/{x+1:03}_real_B.png'
+        fake = cv2.imread(gan_result_path)
+        real = cv2.imread(ground_truth_path)
+        fake_copy = fake.copy()
+        real_copy = real.copy()
+        # Get scattering and absorption spectrum thx to Green/Red separation
+        _, green_f, red_f = cv2.split(fake_copy)
+        _, green_r, red_r = cv2.split(real_copy)
+        # Shape it into 1d
+        red_f = np.array(red_f)
+        red_f = red_f.flatten()
+        all_red_f.extend(red_f)
+
+        red_r = np.array(red_r)
+        red_r = red_r.flatten()
+        all_red_r.extend(red_r)
+
+        green_f = np.array(green_f)
+        green_f = green_f.flatten()
+        all_green_f.extend(green_f)
+
+        green_r = np.array(green_r)
+        green_r = green_r.flatten()
+        all_green_r.extend(green_r)
+    # Plot Abs then Sct and give the scaling and offset values
+    plt.scatter(all_red_f, all_red_r)
+    plt.plot(np.unique(all_red_f), np.poly1d(np.polyfit(all_red_f, all_red_r, 1))(np.unique(all_red_f)),
+             color='red')
+    print(linregress(all_red_f, all_red_r))
+    plt.show()
+    plt.scatter(all_green_f, all_green_r)
+    plt.plot(np.unique(all_green_f), np.poly1d(np.polyfit(all_green_f, all_green_r, 1))(np.unique(all_green_f)),
+             color='green')
+    print(linregress(all_green_f, all_green_r))
     plt.show()
 
 
-# IMG1 comparison image, IMG2 ground truth
-def diff_images(fake, real, show_image=False):
-    # We will divide by 0 at times so ignore the warning
-    np.seterr(divide='ignore', invalid='ignore')
-    diff = abs(fake - real) * 100 / real  # percentage
-    if show_image:
-        z = plt.imshow(diff)
-        plt.colorbar(z)
-        plt.title('Difference'), plt.xticks([]), plt.yticks([])
-        plt.show()
-    return diff
+# Plot the Optical Property maps of one of the test images and get the NMAE and RMSE as %
+def plot_op(options):
+    # IF OVER 1000 FILES CHANGE PADDING TO 04 INSTEAD OF 03
+    # Use this in conjunction with index.html in results of the experiment to see the oP
+    if options.op > 999:
+        print('WARNING options.op must be between 0-999 if over 1000 required change padding to 4')
+    test(f'./results/{options.name}/test_latest/images/{options.op:03}_fake_B.png',
+          f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png', options)
+    get_abs_and_sct_NMAE(f'./results/{options.name}/test_latest/images/{options.op:03}_fake_B.png',
+                         f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png', True)
+    get_abs_and_sct_RMSE(f'./results/{options.name}/test_latest/images/{options.op:03}_fake_B.png',
+                         f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png', True)
 
 
-# Calculate the normalized mean absolute error of the GAN 'fake' and ground truth
-# Predicted + groundtruth are np.array
-def NMAE(predicted, ground_truth):
-    # We will divide by 0 at times so ignore the warning
-    np.seterr(divide='ignore', invalid='ignore')
-    error = np.sum(abs(predicted - ground_truth)) / np.sum(ground_truth)  # np.size() for MAE
-    return error
+# Calculate the absorption and scattering Normalised Mean Absolute Error + return NMAE array
+def get_abs_and_sct_NMAE(gan_result_path, ground_truth_path, show=True):
+    # Pick fake and real images to find absorption + reduced scattering
+    fake = cv2.imread(gan_result_path)
+    real = cv2.imread(ground_truth_path)
+    # Get scattering and absorption spectrum thx to Green/Red separation
+    blue_f, green_f, red_f = cv2.split(fake)
+    _, green_r, red_r = cv2.split(real)
+    # new scaling
+    green_f = cv2.add(cv2.multiply(green_f, SCT_MUL), SCT_OFF)
+    red_f = cv2.add(cv2.multiply(red_f, ABS_MUL), ABS_OFF)
+    # Chen's required scaling
+    green_r = (green_r / 255) * 2.5
+    green_f = (green_f / 255) * 2.5
+    red_f = (red_f / 255) * 0.25
+    red_r = (red_r / 255) * 0.25
+    # NMAE calculation
+    overall_NMAE = NMAE(real, real)
+    abs_NMAE = NMAE(red_f, red_r)
+    sct_NMAE = NMAE(green_f, green_r)
+    # Show if needed
+    if show:  # display as % return as decimal
+        print(f"Overall NMAE: {overall_NMAE * 100:.2f}%")
+        print(f"Absolute NMAE: {abs_NMAE * 100:.2f}%")
+        print(f"Reduced Scattering NMAE: {sct_NMAE * 100:.2f}%")
+    return {'Avg_NMAE': overall_NMAE, 'Abs_NMAE': abs_NMAE, 'Sct_NMAE': sct_NMAE}  # return the decimal values
 
 
-def rmse(predictions, targets):
-    return np.sqrt(((predictions - targets) ** 2).mean())
-
-
+# Calculate the absorption and scattering Root Mean Square Error + return RMSE array
 def get_abs_and_sct_RMSE(gan_result_path, ground_truth_path, show=True):
     # Pick fake and real images to find absorption + reduced scattering
     fake = cv2.imread(gan_result_path)
@@ -160,40 +237,49 @@ def get_abs_and_sct_RMSE(gan_result_path, ground_truth_path, show=True):
     green_f = (green_f / 255) * 2.5
     red_f = (red_f / 255) * 0.25
     red_r = (red_r / 255) * 0.25
-
-    abs_rmse = rmse(red_f, red_r)
-    sct_rmse = rmse(green_f, green_r)
-
+    # Get the RMSE for abs and sct
+    abs_rmse = RMSE(red_f, red_r)
+    sct_rmse = RMSE(green_f, green_r)
+    # Show if needed
     if show:
-        print(f"Absolute RMSE: {abs_rmse}")
-        print(f"Reduced Scattering RMSE: {sct_rmse}")
-    return {'Abs_RMSE': abs_rmse, 'Sct_RMSE': sct_rmse}
+        print(f"Absolute RMSE: {abs_rmse * 100:.2f}%")
+        print(f"Reduced Scattering RMSE: {sct_rmse * 100:.2f}%")
+    return {'Abs_RMSE': abs_rmse, 'Sct_RMSE': sct_rmse}  # return the decimal values
 
 
-def get_abs_and_sct_NMAE(gan_result_path, ground_truth_path, show=True):
-    # Pick fake and real images to find absorption + reduced scattering
-    fake = cv2.imread(gan_result_path)
-    real = cv2.imread(ground_truth_path)
-    # Get scattering and absorption spectrum thx to Green/Red separation
-    _, green_f, red_f = cv2.split(fake)
-    _, green_r, red_r = cv2.split(real)
-    # new scaling
-    green_r = (green_r / 255) * 2.5
-    green_f = (green_f / 255) * 2.5
-    red_f = (red_f / 255) * 0.25
-    red_r = (red_r / 255) * 0.25
+# Calculate the difference between two images, Return difference array
+def diff_images(fake, real, show_image=False):
+    # We will divide by 0 at times so ignore the warning
+    np.seterr(divide='ignore', invalid='ignore')
+    diff = abs(fake - real) * 100 / real  # percentage
+    diff = np.nan_to_num(diff, neginf=0, posinf=0,nan=0) # to get rid of divide by 0 error
+    # Show if needed
+    if show_image:
+        z = plt.imshow(diff)
+        plt.colorbar(z)
+        plt.title('Difference'), plt.xticks([]), plt.yticks([])
+        plt.show()
 
-    overall_NMAE = NMAE(fake, real)
-    abs_NMAE = NMAE(red_f, red_r)
-    sct_NMAE = NMAE(green_f, green_r)
-
-    if show:
-        print(f"Overall NMAE: {overall_NMAE}")
-        print(f"Absolute NMAE: {abs_NMAE}")
-        print(f"Reduced Scattering NMAE: {sct_NMAE}")
-    return {'Avg_NMAE': overall_NMAE, 'Abs_NMAE': abs_NMAE, 'Sct_NMAE': sct_NMAE}
+    return diff
 
 
+# Calculate the normalized mean absolute error of the GAN 'fake' and ground truth
+# Predicted + ground-truth are np.array
+def NMAE(predicted, ground_truth):
+    # We will divide by 0 at times so ignore the warning
+    np.seterr(divide='ignore', invalid='ignore')
+    error = np.sum(abs(predicted - ground_truth)) / np.sum(ground_truth)  # np.size() for MAE
+    error = np.nan_to_num(error, neginf=0, posinf=0,nan=0)
+    return error
+
+
+# Calculate the root mean square error of the GAN 'fake' and ground truth
+# Predicted + ground-truth are np.array
+def RMSE(predictions, ground_truth):
+    return np.sqrt(((predictions - ground_truth) ** 2).mean())
+
+
+# Plot the loss log seen in training
 def plot_loss_log(path_file):
     loss_log = {}
     with open(path_file) as f:
@@ -208,10 +294,11 @@ def plot_loss_log(path_file):
     return loss_log
 
 
+# Plot loss vs epoch seen in training. Loss can be [G_L1, G_GAN, D_real,D_fake]
 def plot_loss_epoch(options):
-    # TODO: figure out how to make argparser for OP, include lossvsepoch nmae and op
     a = plot_loss_log(f'checkpoints/{options.name}/loss_log.txt')
     epochs = [int(a[i]['epoch']) for i in range(len(a))]
+    # Check the loss required
     if options.loss_epoch == 'G_L1':
         loss = [float(a[i]['G_L1']) for i in range(len(a))]
     elif options.loss_epoch == 'G_GAN':
@@ -221,148 +308,93 @@ def plot_loss_epoch(options):
     elif options.loss_epoch == 'D_fake':
         loss = [float(a[i]['D_fake']) for i in range(len(a))]
     else:
-        print('WRONG INPUT! RAISE WARNING')
+        print('WRONG INPUT!')
         exit()
+    # Get the necessaryu data from loss files
+    with open(f'{options.name}.txt', 'w') as f:
+        for epoch, i_list in zip(epochs,loss):
+            f.write("%s," % epoch)
+            f.write("%s\n" % i_list)
     plt.plot(epochs, loss, 'o', label=('train: ' + options.loss_epoch))
     plt.legend(loc="upper right")
     # plt.ylim(0,0.02) # Use this to see the loss in detail
-    plt.show()
+    plt.show()  # show when needed
 
 
-def plot_loss_NMAE(options):
-    experiment_name = options.name
-    NMAE_values = {experiment_name: {'test': {}, 'train': {}}}
-    list_train = []
-    for counter1, filename in enumerate(
-            glob.iglob(f'./checkpoints/{experiment_name}/web/images' + '*/*_B.png', recursive=True)):
-        list_train.append(filename)
-    if not list_train:
-        print('Invalid Name')
-        exit()
-    counter1 = int((counter1 + 1) / 2)
-    num = []
-    for count, s in enumerate(list_train):
-        if count % 2 == 0:
-            continue
-        result = re.search('epoch(.*)_', s)
-        num.append(int(result.group(1)[0:3]))
-    for i in range(counter1):
-        NMAE_values[experiment_name]['train'].update(
-            {num[i]: get_abs_and_sct_NMAE(list_train[i],
-                                          list_train[i + 1], False)})
-    list_test = []
-    # Use of WildCards to search in strings
-    for counter2, filename in enumerate(
-            glob.iglob(f'./results/{experiment_name}/test_latest/images' + '*/*_B.png', recursive=True)):
-        list_test.append(filename)
-    counter2 = int((counter2 + 1) / 2)
-    for i in range(counter2):
-        NMAE_values[experiment_name]['test'].update(
-            {i: get_abs_and_sct_NMAE(list_test[i],
-                                     list_test[i + 1], False)})
-    if options.NMAE_epoch[0] == 'train':
-        task = 'train'
-        counter = counter1
-    elif options.NMAE_epoch[0] == 'test':
-        task = 'test'
-        counter = counter2
-        num.clear()
-        num = [i for i in range(counter)]
-    else:
-        print('RAISE warning test/train')
-        exit()
-    if options.NMAE_epoch[1] == 'sct':
-        NMAE_type = 'Sct_NMAE'
-    elif options.NMAE_epoch[1] == 'abs':
-        NMAE_type = 'Abs_NMAE'
-    elif options.NMAE_epoch[1] == 'avg':
-        NMAE_type = 'Avg_NMAE'
-    else:
-        print('RAISE warning avg/sct/abs only')
-        exit()
-    y = [NMAE_values[experiment_name][task][i][NMAE_type] for i in num]
-    x = NMAE_values[experiment_name][task].keys()
-
-    plt.plot(x, y, label=(task + ': ' + NMAE_type))
-    plt.legend(loc="upper right")
-    plt.show()
+# Find Outliers and remove them from data. Any data outside m*std will be removed
+def reject_outliers(data1, data2,data3,data4, m=2):  # 2 is a fair number
+    hot_key1 = abs(data1 - np.mean(data1)) < m * np.std(data1)  # find anomalies in abs
+    data1 = data1[hot_key1]  # remove anomalies in abs
+    data2 = data2[hot_key1]  # remove anomalies in sct
+    data3 = data3[hot_key1]  # remove anomalies in abs rgb
+    data4 = data4[hot_key1]  # remove anomalies in abs rgb
+    hot_key2 = abs(data2 - np.mean(data2)) < m * np.std(data2)  # find anomalies in sct
+    data1 = data1[hot_key2]  # remove anomalies in abs
+    data2 = data2[hot_key2]  # remove anomalies in sct
+    data3 = data3[hot_key2]  # remove anomalies in abs rgb
+    data4 = data4[hot_key2]  # remove anomalies in abs rgb
+    return data1, data2,data3,data4 # return cleaned data
 
 
-def plot_op(options):
-    # IF OVER 1000 FILES CHANGE PADDING TO 04 INSTEAD OF 03
-    # Use this in conjunction with index.html in results of the experiment to see the oP
-    if options.op > 999:
-        print('WARNING options.op must be between 0-999 if over 1000 required change padding to 4')
-    test(f'./results/{options.name}/test_latest/images/{options.op:03}_fake_B.png',
-         f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png', options)
-    get_abs_and_sct_NMAE(f'./results/{options.name}/test_latest/images/{options.op:03}_fake_B.png',
-                         f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png', True)
-    get_abs_and_sct_RMSE(f'./results/{options.name}/test_latest/images/{options.op:03}_fake_B.png',
-                         f'./results/{options.name}/test_latest/images/{options.op:03}_real_B.png', True)
-
-
-def reject_outliers(data, m=4):
-    return data[abs(data - np.mean(data)) < m * np.std(data)]
-
-
+# Plot a scatter plot of the data, giving the NMAE errors and showing the RGB content of data. REQUIRES PATH
 def plot_scatter(options):
     abso = []
     sct = []
-    num = count_files(f'./results/{options.name}/test_latest/images/')
+    path = "E:/ahmed/Latest_GANPOP"
+    num = count_files(f"{path}/results/{options.name}/test_latest/images", 3) # count files
     print(num)
-    for i in range(num):  # changed line so can get graph
-        all = get_abs_and_sct_NMAE(f'./results/{options.name}/test_latest/images/{i+1:03}_fake_B.png',
-                                   f'./results/{options.name}/test_latest/images/{i+1:03}_real_B.png', False)
-        # all = get_abs_and_sct_RMSE(f'./results/{options.name}/test_latest/images/{i:03}_fake_B.png',
-        #                            f'./results/{options.name}/test_latest/images/{i:03}_real_B.png', False)
+    for i in range(num):  # Get NMAE
+        all = get_abs_and_sct_NMAE(f'./results/{options.name}/test_latest/images/{i + 1:03}_fake_B.png',
+                                   f'./results/{options.name}/test_latest/images/{i + 1:03}_real_B.png', False)
 
         abso.append(all['Abs_NMAE'])
         sct.append(all['Sct_NMAE'])
-        # abso.append(all['Abs_RMSE'])
-        # sct.append(all['Sct_RMSE'])
-    abso = np.array(abso)*100 #NMAE as a %
-    sct = np.array(sct)*100 #NMAE as a %
-    #abso = reject_outliers(abso)
-    #sct = reject_outliers(sct)
+    abso = np.array(abso) * 100  # NMAE as a %
+    abso_rgb = []
+    sct = np.array(sct) * 100  # NMAE as a %
+    sct_rgb = []
+    # Find the average RGB in data
+    for i in range(num):
+        image = get_image(f'./results/{options.name}/test_latest/images/{i + 1:03}_fake_B.png')
+        abso_rgb.append(getAverageRGBN(image)[0])
+        sct_rgb.append(getAverageRGBN(image)[1])
+    # Convert to numpy array
+    abso_rgb = np.array(abso_rgb)
+    sct_rgb = np.array(sct_rgb)
+    # Remove Anomalies if required
+    abso, sct,abso_rgb,sct_rgb = reject_outliers(abso, sct, abso_rgb, sct_rgb)
+    # Print
     print("Average abs " + str(np.average(abso)) + "%")
     print("Average sct " + str(np.average(sct)) + "%")
-    plt.plot(abso, sct, 'o',label="Dataset: " + options.name);
-    #plt.legend()
+    # Display
+    plt.plot(abso, sct, 'o', label="Dataset: " + options.name)
     plt.xlabel('Normalised Absorption, $\mu_a$ (%)')
     plt.ylabel('Normalised Reduced Scattering, $\mu_s$` (%)')
     plt.title("Plot of Normalised Mean Absolute Error of $\mu_a$ and $\mu_s$`")
-    #if options.name == 'gnd3_cyl_tum':
-        #plt.xlim(0, 3)
-        #plt.ylim(0, 3)
-    #else:
-        #plt.xlim(0, 8)
-        #plt.ylim(0,8)
-    # plt.title('Plot of Normalized Mean Absolute Error for $\mu_a$ & $\mu_s$` '), plt.xticks([]), plt.yticks([])
-    # plt.xlabel("Abs_NMAE")
-    # plt.ylabel("Abs_NMAE")
-    # For plotting without tumours first 197
-    # Test the tumours for rec_tumouts + cyl_tomours
-    # if options.name == 'cyl_tumours' or options.name == 'rec_tumours':
-    #     plt.scatter(abso[197:287], sct[197:287], color='black')
-    #     plt.scatter(abso[287:307], sct[287:307], color='red')
-    #     plt.scatter(abso[307:len(abso)], sct[307:len(sct)], color='green')
-    # else:
-    #     #plt.scatter(abso,sct)
-    #     plt.scatter(abso[0:66], sct[0:66], color='red')
-    #     plt.scatter(abso[66:132], sct[66:132], color='orange')
-    #     plt.scatter(abso[132:199], sct[132:199], color='green')
     plt.show()
-    plt.plot(abso, color='red',label="$\mu_a$")
-    plt.plot(sct, color='green',label="$\mu_s$`")
-    plt.legend(loc= "upper left")
+    plt.plot(abso, color='red', label="$\mu_a$")
+    plt.plot(sct, color='green', label="$\mu_s$`")
+    plt.plot(sct + abso, color='blue', label="$\mu_s$`+ $\mu_a$")
+    plt.legend(loc="upper left")
     plt.xlabel('Sample Number, N')
     plt.ylabel('NMAE, as a %')
     plt.title("Plot of NMAE (as a %) of $\mu_a$ and  $\mu_s$` against N ")
     plt.show()
+    # Plot the RGB vs error
+    plt.plot(abso_rgb, abso,'o', color='red', label="$\mu_a$")
+    plt.title("Plot of NMAE (as a %) of $\mu_a$ against R Channel Value of Test Dataset ")
+    plt.xlabel('The R channel Value of Sample ')
+    plt.ylabel('Normalised Absorption, $\mu_a$ (%)')
+    plt.show()
+    plt.plot(sct_rgb, sct, 'o', color='green', label="$\mu_s$'")
+    plt.title("Plot of NMAE (as a %) of $\mu_s$' against G Channel Value of Test Dataset ")
+    plt.xlabel('The G channel Value of Samples ')
+    plt.ylabel('Normalised Reduced Scattering, $\mu_s$` (%)')
+    plt.show()
 
 
+# Get a numpy array of an image so that one can access values[x][y].
 def get_image(image_path):
-    """Get a numpy array of an image so that one can access values[x][y]."""
     image = Image.open(image_path, "r")
     width, height = image.size
     pixel_values = list(image.getdata())
@@ -377,70 +409,86 @@ def get_image(image_path):
     return pixel_values
 
 
+# Given PIL Image, return average value of color as (r, g, b)
+def getAverageRGBN(image):
+    # get image as numpy array
+    im = np.array(image)
+    # get shape
+    w, h, d = im.shape
+    # change shape
+    im.shape = (w * h, d)
+    # get average
+    return tuple(np.average(im, axis=0))
+
+
+# Plot the RGB of the data and show scaled result
 def plot_RGB(options):
-    all = []
-    all2 = []
     abso = []
+    v_abso = []
     sct = []
+    v_sct = []
     abso2 = []
     sct2 = []
-    for i in range(199):
-        image = get_image(f'./results/{options.name}/test_latest/images/{i+1:03}_fake_B.png')
+    num = count_files(f'./results/{options.name}/test_latest/images/')
+    print(num)
+    for i in range(num):
+        # RGB
+        image = get_image(f'./results/{options.name}/test_latest/images/{i + 1:03}_fake_B.png')
         image2 = get_image(f'./results/{options.name}/test_latest/images/{i + 1:03}_real_B.png')
-        all.append(image[0][0])
-        abso.append(image[0][0][0])
-        sct.append(image[0][0][1])
-        all2.append(image2[0][0])
-        abso2.append(image2[0][0][0])
-        sct2.append(image2[0][0][1])
-    #print(all)
+        abso.append(getAverageRGBN(image)[0])
+        abso2.append(getAverageRGBN(image2)[0])
+        sct.append(getAverageRGBN(image)[1])
+        sct2.append(getAverageRGBN(image2)[1])
+        # Abs and Sct Values
+        val = get_abs_and_sct_NMAE(f'./results/{options.name}/test_latest/images/{i + 1:03}_fake_B.png',
+                                   f'./results/{options.name}/test_latest/images/{i + 1:03}_real_B.png', False)
 
-    #print(abso)
-    #print(sct)
-    plt.subplot()
-    # Test the tumours for rec_tumouts + cyl_tomours
-    if options.name == 'cyl_tumours' or options.name == 'rec_tumours':
-        plt.scatter(abso[197:287], sct[197:287], color='black')
-        plt.scatter(abso[287:307], sct[287:307], color='red')
-        plt.scatter(abso[307:len(abso)], sct[307:len(sct)], color='green')
-    else:
-        plot1 = plt.figure(1)
-        plt.scatter(abso[0:66], sct[0:66], color='red')
-        plt.scatter(abso[66:132], sct[66:132], color='orange')
-        plt.scatter(abso[132:198], sct[132:198], color='green')
-        #plt.show()
-        #plot2 = plt.figure(2)
-        plt.scatter(abso2[0:66], sct2[0:66], color='red')
-        plt.scatter(abso2[66:132], sct2[66:132], color='orange')
-        plt.scatter(abso2[132:198], sct2[132:198], color='green')
-        plt.show()
-    #plt.plot(abso)
-    plt.plot(abso2, color='red')
-    #plt.plot(sct)
-    plt.plot(sct2, color='green')
+        v_abso.append(val['Abs_NMAE'])
+        v_sct.append(val['Sct_NMAE'])
+    v_abso = np.array(v_abso) * 100  # NMAE as a %
+    v_sct = np.array(v_sct) * 100  # NMAE as a %
+    print("Average abs " + str(np.average(v_abso)) + "%")
+    print("Average sct " + str(np.average(v_sct)) + "%")
+    # Display
+    n_sct = cv2.add(cv2.multiply(np.array(sct), SCT_MUL), SCT_OFF)
+    n_abso = cv2.add(cv2.multiply(np.array(abso), ABS_MUL), ABS_OFF)
+    plt.plot(n_abso, label="Scaled Abs of Chen (real)")
+    plt.plot(abso, label="Abs of Chen (real)")
+    plt.plot(abso2, color='red', label="Abs of Ahmed(arbitrary)")
+    plt.plot(n_sct, label="Scaled Sct of Chen(real)")
+    plt.plot(sct, label="Sct of Chen(real)")
+    plt.plot(sct2, color='green', label="Sct of Ahmed(arbitrary)")
+    plt.legend()
     plt.show()
+    # Scale
+    abso2 = np.array(abso2) * (0.25/255)
+    abso = np.array(abso) * (0.25 / 255)
+    sct2 = np.array(sct2) * (2.5/255)
+    sct = np.array(sct) * (2.5 / 255)
+    # And save to file for easier comparison
+    np.savetxt('abs.out', abso2, delimiter=',')
+    np.savetxt('sct.out', sct2, delimiter=',')
+    np.savetxt('abs_chen.out', abso, delimiter=',')
+    np.savetxt('sct_chen.out', sct, delimiter=',')
 
 
+# Main, Create an Argument Parser to control code via cmd line
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Find the optical properties of image OR '
                                                  'Plot NMAE vs epoch [train/test] OR'
                                                  'Plot loss vs epoch [train]')
     parser.add_argument('--name', type=str, help='Name of the Experiment', required=True)
     parser.add_argument('--loss_epoch', type=str, help='types of losses [G_L1, G_GAN, D_real, D_fake]')
-    parser.add_argument('--NMAE_epoch', type=str, nargs='+',
-                        help='Normalized mean absolute error for'
-                             '[train/test] for [sct,abs,both]')
+
     parser.add_argument('--op', type=int, help='The sample number, see index.html in /results for more detail')
     parser.add_argument('--scale_off', action='store_true', help='Gets Rid of all scaling for abs,sct and abs,'
                                                                  'sct difference')
     parser.add_argument('--scatter', action='store_true', help="Plot a Scatter Diagram of abs vs sct")
     parser.add_argument('--check_rgb', action='store_true', help="Checks the RGB of image")
     options = parser.parse_args()
-
+    # Options
     if options.loss_epoch:
         plot_loss_epoch(options)
-    if options.NMAE_epoch:
-        plot_loss_NMAE(options)
     if options.op:
         plot_op(options)
     if options.scatter:
