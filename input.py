@@ -197,7 +197,7 @@ def rename_files_CV(options):
 if __name__ == "__main__":
     # Set up a Parser for Data Preparation
     parser = argparse.ArgumentParser(description='Run data preprocessing')
-    parser.add_argument('--dataset', type=str, required=True, help='Name of the dataset')
+    parser.add_argument('--dataroot', type=str, required=True, help='Name of the dataset')
     parser.add_argument('--test_size', type=float, default=0.3, help='Size of test dataset')
     parser.add_argument('--seed', type=int, default=None, help='Random seed for shuffling train/test datasets. If '
                                                                'left default a new dataset will always be generated')
@@ -210,7 +210,7 @@ if __name__ == "__main__":
                                                                            'First is test offset and second is train'
                                                                            'offset')
     options = parser.parse_args()
-    split_dataset(experiment_name=options.dataset, test_size=options.test_size, seed=options.seed, no_gnd=options.no_gnd,
+    split_dataset(experiment_name=options.dataroot, test_size=options.test_size, seed=options.seed, no_gnd=options.no_gnd,
                   not_random=options.not_random, no_blue=options.no_blue, add_blue=options.add_blue)
     # Rename files if required
     if options.rename_with_offsets:
