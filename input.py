@@ -183,14 +183,14 @@ def split_dataset(experiment_name, test_size=0.3, seed=None, no_gnd=False, not_r
 def rename_files_CV(options):
     test_off = int(options.rename_with_offsets[0])
     train_off = int(options.rename_with_offsets[1])
-    max_train = count_files(f"datasets/{options.name}/train")
+    max_train = count_files(f"datasets/{options.dataroot}/train")
     print(max_train)
-    max_test = count_files(f"datasets/{options.name}/test")
+    max_test = count_files(f"datasets/{options.dataroot}/test")
     print(max_test)
     for i in range(max_test):
-        os.rename(f"datasets/{options.name}/test/{i+1:03}.png", f"datasets/{options.name}/test/{i+test_off+1:03}.png")
+        os.rename(f"datasets/{options.dataroot}/test/{i+1:03}.png", f"datasets/{options.dataroot}/test/{i+test_off+1:03}.png")
     for i in range(max_train):
-        os.rename(f"datasets/{options.name}/train/{i+1:03}.png", f"datasets/{options.name}/train/{i+train_off+1:03}.png")
+        os.rename(f"datasets/{options.dataroot}/train/{i+1:03}.png", f"datasets/{options.dataroot}/train/{i+train_off+1:03}.png")
 
 
 # Main
