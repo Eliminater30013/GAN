@@ -22,8 +22,10 @@ All image pairs must be 256x256 and paired together in 256x512 images. '.png' an
 GANPOP # Path to all the code
 └── datasets # Datasets folder
       └── XYZ_Dataset # Name of your dataset
-            ├── test
+            ├── in
+            └── out
             └── train
+            └── test
 ```
 Input-Output Example: 
 
